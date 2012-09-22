@@ -1,0 +1,141 @@
+.TH SIMPLE-MTPFS "1" "September 2012" "SIMPLE-MTPFS version 0.1" "User Commands"
+.SH NAME
+SIMLPLE-MTPFS \- filesystem driver for MTP based devices
+.SH SYNOPSIS
+.SS mounting
+.TP
+\fBsimple-mtpfs \fBmountpoint\fP [\fIoptions\fP]
+.SS unmounting
+.TP
+\fBfusermount -u mountpoint\fP
+.SH DESCRIPTION
+SIMPLE-MTPFS (Simple Media Transfer Protocol FileSystem) is a file system for
+Linux (and other operating systems with a FUSE implementation, such as Mac OS X
+or FreeBSD) capable of operating on files on MTP devices attached via USB to
+local machine. On the local computer where the SIMPLE-MTPFS is mounted, the
+implementation makes use of the FUSE (Filesystem in Userspace) kernel module.
+The practical effect of this is that the end user can seamlessly interact with
+MTP device files.
+.SH OPTIONS
+.SS "general options:"
+.TP
+\fB\-o\fR opt,[opt...]
+mount options
+.TP
+\fB\-h\fR   \fB\-\-help\fR
+print help
+.TP
+\fB\-V\fR   \fB\-\-version\fR
+print version
+.SS "SIMPLE-MTPFS options:"
+.TP
+\fB\-l\fR   \fB\-\-list\-devices\fR
+list available MTP devices
+.TP
+     \fB\-\-device\fR
+select device no. to mount
+.TP
+\fB\-o\fR enable-move\fR
+enable move operation, which can be very slow (depends on the moved content)
+.TP
+\fB\-o\fR tmp-dir=DIR\fR
+select a directory, where all the temporary files will be placed
+.SS "FUSE options:"
+.TP
+\fB\-d\fR   \fB\-o\fR debug
+enable debug output (implies \fB\-f\fR)
+.TP
+\fB\-f\fR
+foreground operation
+.TP
+\fB\-s\fR
+disable multi\-threaded operation
+.TP
+\fB\-o\fR allow_other
+allow access to other users
+.TP
+\fB\-o\fR allow_root
+allow access to root
+.TP
+\fB\-o\fR nonempty
+allow mounts over non\-empty file/dir
+.HP
+\fB\-o\fR default_permissions
+enable permission checking by kernel
+.TP
+\fB\-o\fR fsname=NAME
+set filesystem name
+.TP
+\fB\-o\fR subtype=NAME
+set filesystem type
+.TP
+\fB\-o\fR large_read
+issue large read requests (2.4 only)
+.TP
+\fB\-o\fR max_read=N
+set maximum size of read requests
+.TP
+\fB\-o\fR hard_remove
+immediate removal (don't hide files)
+.TP
+\fB\-o\fR use_ino
+let filesystem set inode numbers
+.TP
+\fB\-o\fR readdir_ino
+try to fill in d_ino in readdir
+.TP
+\fB\-o\fR direct_io
+use direct I/O
+.TP
+\fB\-o\fR kernel_cache
+cache files in kernel
+.TP
+\fB\-o\fR [no]auto_cache
+enable caching based on modification times
+.TP
+\fB\-o\fR umask=M
+set file permissions (octal)
+.TP
+\fB\-o\fR uid=N
+set file owner
+.TP
+\fB\-o\fR gid=N
+set file group
+.TP
+\fB\-o\fR entry_timeout=T
+cache timeout for names (1.0s)
+.TP
+\fB\-o\fR negative_timeout=T
+cache timeout for deleted names (0.0s)
+.TP
+\fB\-o\fR attr_timeout=T
+cache timeout for attributes (1.0s)
+.TP
+\fB\-o\fR ac_attr_timeout=T
+auto cache timeout for attributes (attr_timeout)
+.TP
+\fB\-o\fR intr
+allow requests to be interrupted
+.TP
+\fB\-o\fR intr_signal=NUM
+signal to send on interrupt (10)
+.TP
+\fB\-o\fR modules=M1[:M2...]
+names of modules to push onto filesystem stack
+.TP
+\fB\-o\fR max_write=N
+set maximum size of write requests
+.TP
+\fB\-o\fR max_readahead=N
+set maximum readahead
+.TP
+\fB\-o\fR async_read
+perform reads asynchronously (default)
+.TP
+\fB\-o\fR sync_read
+perform reads synchronously
+.PD
+.SH "AUTHORS"
+.LP
+SIMPLE-MTPFS has been written by Peter Hatina <phatina@gmail.com>.
+

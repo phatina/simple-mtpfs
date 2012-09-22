@@ -1,0 +1,25 @@
+bin_PROGRAMS          = simple-mtpfs
+simple_mtpfs_CXXFLAGS = -Wall -pedantic $(FUSE_CFLAGS)
+simple_mtpfs_CPPFLAGS = -DFUSE_USE_VERSION=28
+simple_mtpfs_LDFLAGS  = -lmtp $(FUSE_LIBS)
+simple_mtpfs_SOURCES  =                 \
+	simple-mtpfs-fuse.h             \
+	simple-mtpfs-libmtp.h           \
+	simple-mtpfs-log.h              \
+	simple-mtpfs-mtp-device.h       \
+	simple-mtpfs-sha1.h             \
+	simple-mtpfs-tmp-files-pool.h   \
+	simple-mtpfs-type-basic.h       \
+	simple-mtpfs-type-dir.h         \
+	simple-mtpfs-type-file.h        \
+	simple-mtpfs-type-tmp-file.h    \
+	simple-mtpfs-fuse.cpp           \
+	simple-mtpfs-libmtp.cpp         \
+	simple-mtpfs-log.cpp            \
+	simple-mtpfs-main.cpp           \
+	simple-mtpfs-mtp-device.cpp     \
+	simple-mtpfs-sha1.cpp           \
+	simple-mtpfs-tmp-files-pool.cpp \
+	simple-mtpfs-type-dir.cpp       \
+	simple-mtpfs-type-file.cpp      \
+	simple-mtpfs-type-tmp-file.cpp
