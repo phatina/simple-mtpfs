@@ -39,6 +39,8 @@ private:
                KEY_ENABLE_MOVE};
 
         int m_good;
+        int m_help;
+        int m_version;
         int m_verbose;
         int m_enable_move;
         int m_list_devices;
@@ -46,7 +48,9 @@ private:
         char *m_tmp_dir;
 
         SMTPFileSystemOptions():
-            m_good(true),
+            m_good(false),
+            m_help(false),
+            m_version(false),
             m_verbose(false),
             m_enable_move(false),
             m_list_devices(false),
@@ -58,18 +62,23 @@ private:
             struct fuse_args *outargs);
     };
 
-    SMTPFileSystem(int argc, char **argv);
+    SMTPFileSystem();
 
 public:
     ~SMTPFileSystem();
 
-    static SMTPFileSystem *createInstance(int argc, char **argv);
     static SMTPFileSystem *instance();
 
     bool parseOptions(int argc, char **argv);
+    void printHelp() const;
+    void printVersion() const;
+    void listDevices() { m_device.listDevices(); }
 
     bool exec();
-    bool good() const { return m_options.m_good; }
+    bool isGood() const { return m_options.m_good; }
+    bool isHelp() const { return m_options.m_help; }
+    bool isVersion() const { return m_options.m_version; }
+    bool isListDevices() const { return m_options.m_list_devices; }
 
     int getattr(const char *path, struct stat *buf);
     int mknod(const char *path, mode_t mode, dev_t dev);

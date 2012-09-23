@@ -21,11 +21,28 @@
 
 int main(int argc, char **argv)
 {
-    SMTPFileSystem *filesystem = SMTPFileSystem::createInstance(argc, argv);
-    if (!filesystem->good()) {
+    SMTPFileSystem *filesystem = SMTPFileSystem::instance();
+
+    if (!filesystem->parseOptions(argc, argv)) {
         std::cout << "Wrong usage! See `" << smtpfs_basename(argv[0])
             << " -h' for details\n";
         return 1;
     }
+
+    if (filesystem->isHelp()) {
+        filesystem->printHelp();
+        return 0;
+    }
+
+    if (filesystem->isVersion()) {
+        filesystem->printVersion();
+        return 0;
+    }
+
+    if (filesystem->isListDevices()) {
+        filesystem->listDevices();
+        return 0;
+    }
+
     return !filesystem->exec();
 }

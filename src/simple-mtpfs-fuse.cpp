@@ -171,55 +171,14 @@ int wrap_create(const char *path, mode_t mode, fuse_file_info *file_info)
 
 std::unique_ptr<SMTPFileSystem> SMTPFileSystem::s_instance;
 
-int SMTPFileSystem::SMTPFileSystemOptions::opt_proc(void *data, const char *arg,
-    int key, fuse_args *outargs)
-{
-    struct fuse_operations tmp_operations;
-    memset(&tmp_operations, sizeof(tmp_operations), 0);
-
-    switch (key) {
-    case KEY_HELP:
-        std::cout << "usage: " << outargs->argv[0] << " mountpoint [options]\n\n"
-            << "general options:\n"
-            << "    -o opt,[opt...]  mount options\n"
-            << "    -h   --help      print help\n"
-            << "    -V   --version   print version\n\n"
-            << "simple-mtpfs options:\n"
-            << "    -l   --list      print available devices\n"
-            << "         --device    select a device number to mount\n"
-            << "    -o enable-move   enable the move operations\n"
-            << "    -o tmp-dir=PATH  define a temporary directory for data storage\n\n";
-        fuse_opt_add_arg(outargs, "-ho");
-        fuse_main(outargs->argc, outargs->argv, &tmp_operations, nullptr);
-        static_cast<SMTPFileSystemOptions*>(data)->m_good = false;
-        return 0;
-
-    case KEY_VERSION:
-        std::cout << "simple-mtpfs version " << VERSION << "\n";
-        fuse_opt_add_arg(outargs, "--version");
-        fuse_main(outargs->argc, outargs->argv, &tmp_operations, nullptr);
-        static_cast<SMTPFileSystemOptions*>(data)->m_good = false;
-        return 0;
-    }
-
-    return 1;
-}
-
-SMTPFileSystem *SMTPFileSystem::createInstance(int argc, char **argv)
-{
-    if (!s_instance.get())
-        s_instance.reset(new SMTPFileSystem(argc, argv));
-    return s_instance.get();
-}
-
 SMTPFileSystem *SMTPFileSystem::instance()
 {
     if (!s_instance.get())
-        return nullptr;
+        s_instance.reset(new SMTPFileSystem());
     return s_instance.get();
 }
 
-SMTPFileSystem::SMTPFileSystem(int argc, char **argv):
+SMTPFileSystem::SMTPFileSystem():
     m_args(),
     m_tmp_files_pool(),
     m_options(),
@@ -258,8 +217,6 @@ SMTPFileSystem::SMTPFileSystem(int argc, char **argv):
     m_fuse_operations.destroy = nullptr;
     m_fuse_operations.access = nullptr;
     m_fuse_operations.create = wrap_create;
-
-    parseOptions(argc, argv);
 }
 
 SMTPFileSystem::~SMTPFileSystem()
@@ -280,32 +237,42 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         SMTPFS_OPT_KEY("--list-devices", m_list_devices, 1),
         SMTPFS_OPT_KEY("-v", m_verbose, 1),
         SMTPFS_OPT_KEY("--verbose", m_verbose, 1),
-        FUSE_OPT_KEY("-V", SMTPFileSystemOptions::KEY_VERSION),
-        FUSE_OPT_KEY("--version", SMTPFileSystemOptions::KEY_VERSION),
-        FUSE_OPT_KEY("-h", SMTPFileSystemOptions::KEY_HELP),
-        FUSE_OPT_KEY("--help", SMTPFileSystemOptions::KEY_HELP),
+        SMTPFS_OPT_KEY("-V", m_version, 1),
+        SMTPFS_OPT_KEY("--version", m_version, 1),
+        SMTPFS_OPT_KEY("-h", m_help, 1),
+        SMTPFS_OPT_KEY("--help", m_help, 1),
         FUSE_OPT_END
     };
 
-    if (argc < 2)
-        return (m_options.m_good = false);
+    if (argc < 2) {
+        m_options.m_good = false;
+        return false;
+    }
 
     fuse_opt_free_args(&m_args);
     m_args = FUSE_ARGS_INIT(argc, argv);
-    if (fuse_opt_parse(&m_args, &m_options, smtpfs_opts, SMTPFileSystemOptions::opt_proc) == -1)
-        return (m_options.m_good = false);
+    if (fuse_opt_parse(&m_args, &m_options, smtpfs_opts, nullptr) == -1) {
+        m_options.m_good = false;
+        return false;
+    }
 
-    if (m_options.m_list_devices)
+    if (m_options.m_version || m_options.m_help || m_options.m_list_devices) {
+        m_options.m_good = true;
         return true;
+    }
 
-    if (--m_options.m_device < 0)
-        return (m_options.m_good = false);
+    if (--m_options.m_device < 0) {
+        m_options.m_good = false;
+        return false;
+    }
 
     if (m_options.m_tmp_dir)
         removeTmpDir();
     m_options.m_tmp_dir = expandTmpDir(m_options.m_tmp_dir);
-    if (!m_options.m_tmp_dir)
-        return (m_options.m_good = false);
+    if (!m_options.m_tmp_dir) {
+        m_options.m_good = false;
+        return false;
+    }
 
     m_tmp_files_pool.setTmpDir(m_options.m_tmp_dir);
     ::mkdir(static_cast<const char*>(m_options.m_tmp_dir), 0700);
@@ -315,7 +282,41 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         fuse_opt_add_arg(&m_args, "-f");
     }
 
+    m_options.m_good = true;
     return true;
+}
+
+void SMTPFileSystem::printHelp() const
+{
+    struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+    struct fuse_operations tmp_operations;
+    memset(&tmp_operations, sizeof(tmp_operations), 0);
+    std::cout << "usage: " << m_args.argv[0] << " mountpoint [options]\n\n"
+        << "general options:\n"
+        << "    -o opt,[opt...]        mount options\n"
+        << "    -h   --help            print help\n"
+        << "    -V   --version         print version\n\n"
+        << "simple-mtpfs options:\n"
+        << "    -l   --list-devices    print available devices\n"
+        << "         --device          select a device number to mount\n"
+        << "    -o enable-move         enable the move operations\n"
+        << "    -o tmp-dir=PATH        define a temporary directory for data storage\n\n";
+    fuse_opt_add_arg(&args, m_args.argv[0]);
+    fuse_opt_add_arg(&args, "-ho");
+    fuse_main(args.argc, args.argv, &tmp_operations, nullptr);
+    fuse_opt_free_args(&args);
+}
+
+void SMTPFileSystem::printVersion() const
+{
+    struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+    struct fuse_operations tmp_operations;
+    memset(&tmp_operations, sizeof(tmp_operations), 0);
+    fuse_opt_add_arg(&args, m_args.argv[0]);
+    fuse_opt_add_arg(&args, "--version");
+    std::cout << "simple-mtpfs version " << VERSION << "\n";
+    fuse_main(args.argc, args.argv, &tmp_operations, nullptr);
+    fuse_opt_free_args(&args);
 }
 
 bool SMTPFileSystem::exec()
@@ -327,6 +328,9 @@ bool SMTPFileSystem::exec()
         m_device.listDevices();
         return true;
     }
+
+    if (m_options.m_version || m_options.m_help)
+        return true;
 
     if (!m_device.connect(m_options.m_device))
         return false;
