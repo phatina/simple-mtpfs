@@ -430,6 +430,9 @@ int SMTPFileSystem::rename(const char *path, const char *newpath)
     rval = m_device.filePush(tmp_file, std::string(newpath));
     if (rval != 0)
         return rval;
+    rval = m_device.fileRemove(std::string(path));
+    if (rval != 0)
+        return rval;
     return 0;
 }
 
