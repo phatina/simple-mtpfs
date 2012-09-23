@@ -263,7 +263,7 @@ int MTPDevice::dirRemove(const std::string &path)
     const std::string tmp_basename(smtpfs_basename(path));
     const std::string tmp_dirname(smtpfs_dirname(path));
     const TypeDir *dir_parent = dirFetchContent(tmp_dirname);
-    const TypeDir *dir_to_remove = dir_parent->dir(tmp_basename);
+    const TypeDir *dir_to_remove = dir_parent ? dir_parent->dir(tmp_basename) : nullptr;
     if (!dir_parent || !dir_to_remove || dir_parent->id() == 0) {
         logerr("No such directory '", path, "' to remove.\n");
         return -ENOENT;
@@ -289,7 +289,7 @@ int MTPDevice::dirRename(const std::string &oldpath, const std::string &newpath)
     const std::string tmp_new_basename(smtpfs_basename(newpath));
     const std::string tmp_new_dirname(smtpfs_dirname(newpath));
     const TypeDir *dir_parent = dirFetchContent(tmp_old_dirname);
-    const TypeDir *dir_to_rename = dir_parent->dir(tmp_old_basename);
+    const TypeDir *dir_to_rename = dir_parent ? dir_parent->dir(tmp_old_basename) : nullptr;
     if (!dir_parent || !dir_to_rename || dir_parent->id() == 0) {
         logerr("Can not rename '", tmp_old_basename, "' to '",
             tmp_new_basename, "'.\n");
@@ -341,8 +341,8 @@ int MTPDevice::rename(const std::string &oldpath, const std::string &newpath)
     const std::string tmp_new_dirname(smtpfs_dirname(newpath));
     const TypeDir *dir_old_parent = dirFetchContent(tmp_old_dirname);
     const TypeDir *dir_new_parent = dirFetchContent(tmp_new_dirname);
-    const TypeDir *dir_to_rename = dir_old_parent->dir(tmp_old_basename);
-    const TypeFile *file_to_rename = dir_old_parent->file(tmp_old_basename);
+    const TypeDir *dir_to_rename = dir_old_parent ? dir_old_parent->dir(tmp_old_basename) : nullptr;
+    const TypeFile *file_to_rename = dir_old_parent ? dir_old_parent->file(tmp_old_basename) : nullptr;
 
     logdebug("dir_to_rename:    ", dir_to_rename, "\n");
     logdebug("file_to_rename:   ", file_to_rename, "\n");
@@ -396,12 +396,11 @@ int MTPDevice::filePull(const std::string &src, const std::string &dst)
     const std::string src_basename(smtpfs_basename(src));
     const std::string src_dirname(smtpfs_dirname(src));
     const TypeDir *dir_parent = dirFetchContent(src_dirname);
+    const TypeFile *file_to_fetch = dir_parent ? dir_parent->file(src_basename) : nullptr;
     if (!dir_parent) {
         logerr("Can not fetch '", src, "'.\n");
         return -EINVAL;
     }
-
-    const TypeFile *file_to_fetch = dir_parent->file(src_basename);
     if (!file_to_fetch) {
         logerr("No such file '", src, "'.\n");
         return -ENOENT;
@@ -431,8 +430,8 @@ int MTPDevice::filePush(const std::string &src, const std::string &dst)
     const std::string dst_basename(smtpfs_basename(dst));
     const std::string dst_dirname(smtpfs_dirname(dst));
     const TypeDir *dir_parent = dirFetchContent(dst_dirname);
-    const TypeFile *file_to_remove = dir_parent->file(dst_basename);
-    if (!dir_parent || dir_parent->file(dst_basename)) {
+    const TypeFile *file_to_remove = dir_parent ? dir_parent->file(dst_basename) : nullptr;
+    if (dir_parent && file_to_remove) {
         criticalEnter();
         int rval = LIBMTP_Delete_Object(m_device, file_to_remove->id());
         criticalLeave();
@@ -479,7 +478,7 @@ int MTPDevice::fileRemove(const std::string &path)
     const std::string tmp_basename(smtpfs_basename(path));
     const std::string tmp_dirname(smtpfs_dirname(path));
     const TypeDir *dir_parent = dirFetchContent(tmp_dirname);
-    const TypeFile *file_to_remove = dir_parent->file(tmp_basename);
+    const TypeFile *file_to_remove = dir_parent ? dir_parent->file(tmp_basename) : nullptr;
     if (!dir_parent || !file_to_remove) {
         logerr("No such file '", path, "' to remove.\n");
         return -ENOENT;
@@ -503,7 +502,7 @@ int MTPDevice::fileRename(const std::string &oldpath, const std::string &newpath
     const std::string tmp_new_basename(smtpfs_basename(newpath));
     const std::string tmp_new_dirname(smtpfs_dirname(newpath));
     const TypeDir *dir_parent = dirFetchContent(tmp_old_dirname);
-    const TypeFile *file_to_rename = dir_parent->file(tmp_old_basename);
+    const TypeFile *file_to_rename = dir_parent ? dir_parent->file(tmp_old_basename) : nullptr;
     if (!dir_parent || !file_to_rename || tmp_old_dirname != tmp_new_dirname) {
         logerr("Can not rename '", oldpath, "' to '", tmp_new_basename, "'.\n");
         return -EINVAL;
