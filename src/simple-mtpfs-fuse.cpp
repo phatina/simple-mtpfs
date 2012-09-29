@@ -256,6 +256,8 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         return false;
     }
 
+    fuse_opt_add_arg(&m_args, "-s");
+
     if (m_options.m_version || m_options.m_help || m_options.m_list_devices) {
         m_options.m_good = true;
         return true;
