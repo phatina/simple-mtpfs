@@ -524,6 +524,9 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
     if (rval < 0)
         return rval;
 
+    if (std::string(path) == std::string("-"))
+        return 0;
+
     const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(std::string(path));
     const bool modif = tmp_file->isModified();
     const std::string tmp_path = tmp_file->pathTmp();
