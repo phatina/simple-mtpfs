@@ -39,10 +39,8 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    if (filesystem->isListDevices()) {
-        filesystem->listDevices();
-        return 0;
-    }
+    if (filesystem->isListDevices())
+        return !filesystem->listDevices();
 
     return !filesystem->exec();
 }

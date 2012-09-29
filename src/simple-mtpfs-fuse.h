@@ -72,7 +72,7 @@ public:
     bool parseOptions(int argc, char **argv);
     void printHelp() const;
     void printVersion() const;
-    void listDevices() { m_device.listDevices(); }
+    bool listDevices() { return m_device.listDevices(); }
 
     bool exec();
     bool isGood() const { return m_options.m_good; }

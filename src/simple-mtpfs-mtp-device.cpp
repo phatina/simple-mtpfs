@@ -107,19 +107,23 @@ void MTPDevice::disconnect()
     logmsg("Disconnected.\n");
 }
 
-void MTPDevice::listDevices()
+bool MTPDevice::listDevices()
 {
     int raw_devices_cnt;
     LIBMTP_raw_device_t *raw_devices;
     LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
         &raw_devices, &raw_devices_cnt);
-    if (err != 0)
-        return;
+    if (err != 0) {
+        if (err == LIBMTP_ERROR_NO_DEVICE_ATTACHED)
+            std::cerr << "No raw devices found.\n";
+        return false;
+    }
 
     for (int i = 0; i < raw_devices_cnt; ++i) {
         std::cout << i + 1 << ": " << raw_devices[i].device_entry.vendor
             << raw_devices[i].device_entry.product << "\n";
     }
+    return true;
 }
 
 uint64_t MTPDevice::storageTotalSize() const

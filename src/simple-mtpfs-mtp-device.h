@@ -37,7 +37,7 @@ public:
     bool connect(int dev_no = 0);
     void disconnect();
 
-    void listDevices();
+    bool listDevices();
     void enableMove(bool e = true) { m_move_enabled = e; }
 
     uint64_t storageTotalSize() const;
