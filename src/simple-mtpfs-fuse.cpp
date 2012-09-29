@@ -511,7 +511,7 @@ int SMTPFileSystem::write(const char *path, const char *buf, size_t size,
     int rval = ::pwrite(file_info->fh, buf, size, offset);
     if (rval < 0)
         return -errno;
-    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(std::string(path));
+    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(static_cast<int>(file_info->fh));
     if (!tmp_file)
         return -EINVAL;
     const_cast<TypeTmpFile*>(tmp_file)->setModified();
@@ -527,10 +527,10 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
     if (std::string(path) == std::string("-"))
         return 0;
 
-    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(std::string(path));
+    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(static_cast<int>(file_info->fh));
     const bool modif = tmp_file->isModified();
     const std::string tmp_path = tmp_file->pathTmp();
-    m_tmp_files_pool.removeFile(tmp_file->pathTmp());
+    m_tmp_files_pool.removeFile(tmp_file->fileDescriptor());
     if (modif) {
         int push_rval = m_device.filePush(tmp_path, std::string(path));
         if (push_rval != 0)

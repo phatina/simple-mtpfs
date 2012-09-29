@@ -17,6 +17,7 @@
 
 #include <config.h>
 #include <algorithm>
+#include <sstream>
 #include "simple-mtpfs-tmp-files-pool.h"
 #include "simple-mtpfs-sha1.h"
 
@@ -35,18 +36,17 @@ void TmpFilesPool::addFile(const TypeTmpFile &tmp)
     m_pool.insert(tmp);
 }
 
-void TmpFilesPool::removeFile(const std::string &tmp_file)
+void TmpFilesPool::removeFile(int desc)
 {
-    auto it = std::find(m_pool.begin(), m_pool.end(), tmp_file);
+    auto it = std::find(m_pool.begin(), m_pool.end(), desc);
     if (it == m_pool.end())
         return;
     m_pool.erase(it);
 }
 
-const TypeTmpFile *TmpFilesPool::getFile(const std::string &path) const
+const TypeTmpFile *TmpFilesPool::getFile(int desc) const
 {
-    std::string tmp_path = makeTmpPath(path);
-    auto it = std::find(m_pool.begin(), m_pool.end(), tmp_path);
+    auto it = std::find(m_pool.begin(), m_pool.end(), desc);
     if (it == m_pool.end())
         return nullptr;
     return static_cast<const TypeTmpFile*>(&*it);
@@ -54,5 +54,8 @@ const TypeTmpFile *TmpFilesPool::getFile(const std::string &path) const
 
 std::string TmpFilesPool::makeTmpPath(const std::string &path_device) const
 {
-    return m_tmp_path + std::string("/") + SHA1::sumString(path_device);
+    static int cnt = 0;
+    std::stringstream ss;
+    ss << path_device << ++cnt;
+    return m_tmp_path + std::string("/") + SHA1::sumString(ss.str());
 }

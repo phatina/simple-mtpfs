@@ -40,19 +40,19 @@ public:
     TypeTmpFile &operator =(const TypeTmpFile &rhs);
     bool operator ==(const TypeTmpFile &rhs) const
     {
-        return m_path_tmp == rhs.m_path_tmp;
+        return m_file_desc == rhs.m_file_desc;
     }
-    bool operator ==(const std::string &path) const
+    bool operator ==(int desc) const
     {
-        return m_path_tmp == path;
+        return m_file_desc == desc;
     }
     bool operator <(const TypeTmpFile &rhs) const
     {
-        return m_path_tmp < rhs.m_path_tmp;
+        return m_file_desc < rhs.m_file_desc;
     }
-    bool operator <(const std::string &path) const
+    bool operator <(int desc) const
     {
-        return m_path_tmp < path;
+        return m_file_desc < desc;
     }
 
 
