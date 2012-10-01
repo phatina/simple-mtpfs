@@ -307,6 +307,7 @@ void SMTPFileSystem::printHelp() const
     fuse_opt_add_arg(&args, "-ho");
     fuse_main(args.argc, args.argv, &tmp_operations, nullptr);
     fuse_opt_free_args(&args);
+    std::cout << "\nReport bugs to <" << PACKAGE_BUGREPORT << ">.\n";
 }
 
 void SMTPFileSystem::printVersion() const
