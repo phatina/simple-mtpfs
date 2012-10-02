@@ -451,7 +451,17 @@ int SMTPFileSystem::chown(const char *path, uid_t uid, gid_t gid)
 
 int SMTPFileSystem::truncate(const char *path, off_t new_size)
 {
-    return 0;
+    const std::string tmp_path = m_tmp_files_pool.makeTmpPath(std::string(path));
+    int rval = m_device.filePull(std::string(path), tmp_path);
+    if (rval != 0)
+        return rval;
+    rval = ::truncate(tmp_path.c_str(), new_size);
+    if (rval != 0)
+        return -errno;
+    rval = m_device.fileRemove(std::string(path));
+    if (rval != 0)
+        return rval;
+    return m_device.filePush(tmp_path, std::string(path));
 }
 
 int SMTPFileSystem::utime(const char *path, struct utimbuf *ubuf)
