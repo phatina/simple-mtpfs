@@ -559,7 +559,7 @@ int SMTPFileSystem::flush(const char *path, struct fuse_file_info *file_info)
 int SMTPFileSystem::fsync(const char *path, int datasync,
     struct fuse_file_info *fi)
 {
-    return 0;
+    return datasync ? ::fdatasync(fi->fh) : ::fsync(fi->fh);
 }
 
 int SMTPFileSystem::opendir(const char *path, struct fuse_file_info *file_info)
