@@ -172,6 +172,11 @@ int wrap_ftruncate(const char *path, off_t offset, struct fuse_file_info *file_i
     return SMTPFileSystem::instance()->ftruncate(path, offset, file_info);
 }
 
+int wrap_fgetattr(const char *path, struct stat *buf, struct fuse_file_info *file_info)
+{
+    return SMTPFileSystem::instance()->fgetattr(path, buf, file_info);
+}
+
 // -----------------------------------------------------------------------------
 
 std::unique_ptr<SMTPFileSystem> SMTPFileSystem::s_instance;
@@ -223,6 +228,7 @@ SMTPFileSystem::SMTPFileSystem():
     m_fuse_operations.access = nullptr;
     m_fuse_operations.create = wrap_create;
     m_fuse_operations.ftruncate = wrap_ftruncate;
+    m_fuse_operations.fgetattr = wrap_fgetattr;
 }
 
 SMTPFileSystem::~SMTPFileSystem()
@@ -631,6 +637,13 @@ int SMTPFileSystem::ftruncate(const char *path, off_t offset,
     if (::ftruncate(file_info->fh, offset) != 0)
         return -errno;
     const_cast<TypeTmpFile*>(tmp_file)->setModified();
+    return 0;
+}
+
+int SMTPFileSystem::fgetattr(const char *path, struct stat *buf, fuse_file_info *file_info)
+{
+    if (::fstat(file_info->fh, buf) != 0)
+        return -errno;
     return 0;
 }
 
