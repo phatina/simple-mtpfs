@@ -167,6 +167,11 @@ int wrap_create(const char *path, mode_t mode, fuse_file_info *file_info)
     return SMTPFileSystem::instance()->create(path, mode, file_info);
 }
 
+int wrap_ftruncate(const char *path, off_t offset, struct fuse_file_info *file_info)
+{
+    return SMTPFileSystem::instance()->ftruncate(path, offset, file_info);
+}
+
 // -----------------------------------------------------------------------------
 
 std::unique_ptr<SMTPFileSystem> SMTPFileSystem::s_instance;
@@ -217,6 +222,7 @@ SMTPFileSystem::SMTPFileSystem():
     m_fuse_operations.destroy = nullptr;
     m_fuse_operations.access = nullptr;
     m_fuse_operations.create = wrap_create;
+    m_fuse_operations.ftruncate = wrap_ftruncate;
 }
 
 SMTPFileSystem::~SMTPFileSystem()
@@ -621,6 +627,10 @@ int SMTPFileSystem::fsyncdir(const char *path, int datasync,
 int SMTPFileSystem::ftruncate(const char *path, off_t offset,
     struct fuse_file_info *file_info)
 {
+    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(file_info->fh);
+    if (::ftruncate(file_info->fh, offset) != 0)
+        return -errno;
+    const_cast<TypeTmpFile*>(tmp_file)->setModified();
     return 0;
 }
 

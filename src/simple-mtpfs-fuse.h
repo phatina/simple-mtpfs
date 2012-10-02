@@ -101,7 +101,7 @@ public:
     int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *file_info);
     int releasedir(const char *path, struct fuse_file_info *file_info);
     int fsyncdir(const char *path, int datasync, struct fuse_file_info *file_info);
-    int truncate(const char *path, off_t offset, struct fuse_file_info *file_info);
+    int ftruncate(const char *path, off_t offset, struct fuse_file_info *file_info);
     void* init(struct fuse_conn_info *conn);
     int create(const char *path, mode_t mode, fuse_file_info *file_info);
 
