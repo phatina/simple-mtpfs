@@ -394,10 +394,12 @@ int SMTPFileSystem::mknod(const char *path, mode_t mode, dev_t dev)
     std::string tmp_path = m_tmp_files_pool.makeTmpPath(std::string(path));
     int rval = ::open(tmp_path.c_str(), O_CREAT | O_WRONLY, mode);
     if (rval < 0)
-        return -EMFILE;
+        return -errno;
     rval = close(rval);
     if (rval < 0)
         return -errno;
+    m_device.filePush(tmp_path, std::string(path));
+    ::unlink(tmp_path.c_str());
     return rval;
 }
 
@@ -616,7 +618,7 @@ int SMTPFileSystem::fsyncdir(const char *path, int datasync,
     return 0;
 }
 
-int SMTPFileSystem::truncate(const char *path, off_t offset,
+int SMTPFileSystem::ftruncate(const char *path, off_t offset,
     struct fuse_file_info *file_info)
 {
     return 0;
