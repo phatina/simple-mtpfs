@@ -304,7 +304,7 @@ void SMTPFileSystem::printHelp() const
 {
     struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
     struct fuse_operations tmp_operations;
-    memset(&tmp_operations, sizeof(tmp_operations), 0);
+    memset(&tmp_operations, 0, sizeof(tmp_operations));
     std::cout << "usage: " << m_args.argv[0] << " mountpoint [options]\n\n"
         << "general options:\n"
         << "    -o opt,[opt...]        mount options\n"
@@ -326,7 +326,7 @@ void SMTPFileSystem::printVersion() const
 {
     struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
     struct fuse_operations tmp_operations;
-    memset(&tmp_operations, sizeof(tmp_operations), 0);
+    memset(&tmp_operations, 0, sizeof(tmp_operations));
     fuse_opt_add_arg(&args, m_args.argv[0]);
     fuse_opt_add_arg(&args, "--version");
     std::cout << "simple-mtpfs version " << VERSION << "\n";
