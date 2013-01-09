@@ -1,0 +1,30 @@
+Source: simple-mtpfs
+Section: utils
+Priority: optional
+Maintainer: Peter Hatina <phatina@gmail.com>
+Build-Depends: debhelper (>= 7), dh-autoreconf, autotools-dev, libmtp-dev (>= 1.0.3), libfuse-dev
+Standards-Version: 3.9.2
+Vcs-Git: git://github.com/lamby/phatina/simple-mtpfs.git
+Vcs-Browser: https://github.com/phatina/simple-mtpfs
+
+Package: simple-mtpfs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, fuse-utils
+Provides: mtpfs
+Conflicts: mtpfs
+Description: Simple MTP fuse filesystem driver
+ SIMPLE-MTPFS (Simple Media Transfer Protocol FileSystem) is a file system for
+ Linux (and other operating systems with a FUSE implementation, such as Mac OS X
+ or FreeBSD) capable of operating on files on MTP devices attached via
+ USB to local machine. On the local computer where the SIMPLE-MTPFS is
+ mounted, the implementation makes use of the FUSE (Filesystem in Userspace)
+ kernel module. The practical effect of this is that the end user can seamlessly
+ interact with MTP device files.
+ .
+ MTPfs is a FUSE filesystem that supports reading and writing from MTP (Media
+ Transfer Protocol) devices, such as MP3 players, video players or digital
+ cameras.
+ .
+ In addition to revealing media files on the connected device, MTPfs exposes a
+ virtual directory called "/Playlists" which contains the device's playlists as
+ m3u files.

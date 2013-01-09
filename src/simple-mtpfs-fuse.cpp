@@ -21,7 +21,7 @@ extern "C" {
 #  include <dirent.h>
 #  include <errno.h>
 #  include <fcntl.h>
-#  include <fuse_opt.h>
+#  include <fuse/fuse_opt.h>
 #  include <libgen.h>
 #  include <unistd.h>
 #  include <stddef.h>

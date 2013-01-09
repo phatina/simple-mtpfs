@@ -1,0 +1,4 @@
+usr/bin/simple-mtpfs usr/bin/mtpfs
+usr/bin/simple-mtpfs sbin/mount.mtpfs
+usr/share/man/man1/simple-mtpfs.1 usr/share/man/man1/mtpfs.1
+usr/share/man/man1/simple-mtpfs.1 usr/share/man/man1/mount.mtpfs.1
