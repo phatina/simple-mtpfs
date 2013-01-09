@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 extern "C" {
-#  include <fuse.h>
+#  include <fuse/fuse.h>
 }
 #include "simple-mtpfs-mtp-device.h"
 #include "simple-mtpfs-tmp-files-pool.h"
