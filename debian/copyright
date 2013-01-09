@@ -1,0 +1,17 @@
+This package was debianized by Eugene San (eugenesan) <eugenesan@gmail.com>
+on Wed, 9 Jan 2012 16:08:16 +0200.
+
+It was downloaded from <https://github.com/phatina/simple-mtpfs>.
+
+Copyright:
+
+    Copyright (C) 2012 Peter Hatina <phatina@gmail.com>
+
+    This program can be distributed under the terms of the GNU GPL.
+    See the file COPYING.
+
+The Debian packaging is (C) 2013, Eugene San (eugenesan) <eugenesan@gmail.com>
+and is licensed under the GPL.
+
+On Debian systems, you can find the GNU General Public License in the file
+/usr/share/common-licenses/GPL.
