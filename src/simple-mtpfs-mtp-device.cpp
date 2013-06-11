@@ -87,7 +87,7 @@ bool MTPDevice::connect(int dev_no)
 
     m_device = LIBMTP_Open_Raw_Device_Uncached(&raw_devices[dev_no]);
     free(static_cast<void*>(raw_devices));
-    if (m_device == nullptr)
+    if (!m_device)
         return false;
 
     if (!enumStorages())

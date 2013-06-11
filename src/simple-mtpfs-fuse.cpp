@@ -671,10 +671,10 @@ bool SMTPFileSystem::removeDir(const std::string &dirname)
     std::string path;
 
     dir = ::opendir(dirname.c_str());
-    if (dir == nullptr)
+    if (!dir)
         return false;
 
-    while ((entry = ::readdir(dir)) != nullptr) {
+    while ((entry = ::readdir(dir))) {
         if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
             path = dirname + "/" + entry->d_name;
             if (entry->d_type == DT_DIR)
