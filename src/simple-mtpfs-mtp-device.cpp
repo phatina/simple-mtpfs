@@ -125,6 +125,8 @@ bool MTPDevice::listDevices()
         std::cout << i + 1 << ": " << raw_devices[i].device_entry.vendor
             << raw_devices[i].device_entry.product << "\n";
     }
+    free(static_cast<void*>(raw_devices));
+
     return true;
 }
 
