@@ -55,7 +55,7 @@ private:
             m_enable_move(false),
             m_list_devices(false),
             m_device(1),
-            m_tmp_dir(NULL) {}
+            m_tmp_dir(nullptr) {}
         ~SMTPFileSystemOptions() { free(static_cast<void*>(m_tmp_dir)); }
 
         static int opt_proc(void *data, const char *arg, int key,

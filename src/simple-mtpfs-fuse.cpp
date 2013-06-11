@@ -243,7 +243,6 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
 
     static struct fuse_opt smtpfs_opts[] = {
         SMTPFS_OPT_KEY("enable-move", m_enable_move, 1),
-        SMTPFS_OPT_KEY("tmp-dir=%s", m_tmp_dir, 0),
         SMTPFS_OPT_KEY("--device %i", m_device, 0),
         SMTPFS_OPT_KEY("-l", m_list_devices, 1),
         SMTPFS_OPT_KEY("--list-devices", m_list_devices, 1),
@@ -282,14 +281,17 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
 
     if (m_options.m_tmp_dir)
         removeTmpDir();
-    m_options.m_tmp_dir = expandTmpDir(m_options.m_tmp_dir);
+    m_options.m_tmp_dir = expandTmpDir(getenv("TMPDIR"));
     if (!m_options.m_tmp_dir) {
         m_options.m_good = false;
         return false;
     }
 
     m_tmp_files_pool.setTmpDir(m_options.m_tmp_dir);
-    ::mkdir(static_cast<const char*>(m_options.m_tmp_dir), 0700);
+    if (::mkdir(static_cast<const char*>(m_options.m_tmp_dir), S_IRWXU) != 0) {
+        m_options.m_good = false;
+        return false;
+    }
 
     if (m_options.m_verbose) {
         Logger::setGlobalVerbose();
@@ -313,8 +315,7 @@ void SMTPFileSystem::printHelp() const
         << "simple-mtpfs options:\n"
         << "    -l   --list-devices    print available devices\n"
         << "         --device          select a device number to mount\n"
-        << "    -o enable-move         enable the move operations\n"
-        << "    -o tmp-dir=PATH        define a temporary directory for data storage\n\n";
+        << "    -o enable-move         enable the move operations\n\n";
     fuse_opt_add_arg(&args, m_args.argv[0]);
     fuse_opt_add_arg(&args, "-ho");
     fuse_main(args.argc, args.argv, &tmp_operations, nullptr);
@@ -649,20 +650,18 @@ int SMTPFileSystem::fgetattr(const char *path, struct stat *buf, fuse_file_info 
 
 char *SMTPFileSystem::expandTmpDir(char *tmp)
 {
-    if (!tmp) {
-        tmp = strdup("/tmp/simple-mtpfs-XXXXXX");
-    } else {
-        std::string tmp_dir(tmp);
+    std::string tmp_dir(tmp ? tmp : "/tmp/");
+    if (tmp) {
+        tmp_dir = tmp;
         auto it = tmp_dir.find('~');
         for (; it != std::string::npos; it = tmp_dir.find('~'))
             tmp_dir.replace(it, 1, getenv("HOME"));
-        tmp_dir += "XXXXXX";
-        free(static_cast<void*>(tmp));
-        tmp = strdup(tmp_dir.c_str());
-        if (!tmp)
-            return nullptr;
+        if (tmp_dir[tmp_dir.length() - 1] != '/')
+            tmp_dir += '/';
     }
-    return mktemp(tmp);
+    tmp_dir += "simple-mtpfs-XXXXXX";
+    std::cout << tmp_dir << "\n";
+    return mktemp(strdup(tmp_dir.c_str()));
 }
 
 bool SMTPFileSystem::removeDir(const std::string &dirname)
