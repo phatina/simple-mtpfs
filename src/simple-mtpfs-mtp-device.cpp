@@ -59,8 +59,10 @@ bool MTPDevice::connect(int dev_no)
     LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
         &raw_devices, &raw_devices_cnt);
 
-    if (dev_no > raw_devices_cnt)
+    if (dev_no > raw_devices_cnt) {
+        free(static_cast<void*>(raw_devices));
         return false;
+    }
 
     if (err != LIBMTP_ERROR_NONE) {
         switch(err) {
