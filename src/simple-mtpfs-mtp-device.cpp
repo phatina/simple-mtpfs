@@ -24,6 +24,7 @@
 extern "C" {
 #  include <unistd.h>
 #  include <sys/types.h>
+#  define _DARWIN_USE_64_BIT_INODE
 #  include <sys/stat.h>
 }
 #include "simple-mtpfs-fuse.h"
@@ -449,8 +450,8 @@ int MTPDevice::filePush(const std::string &src, const std::string &dst)
         }
     }
 
-    struct stat64 file_stat;
-    stat64(src.c_str(), &file_stat);
+    struct stat file_stat;
+    stat(src.c_str(), &file_stat);
     TypeFile file_to_upload(0, dir_parent->id(), dir_parent->storageid(),
         dst_basename, static_cast<uint64_t>(file_stat.st_size), 0);
     LIBMTP_file_t *f = file_to_upload.toLIBMTPFile();

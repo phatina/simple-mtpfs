@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <string>
+#include <cstdlib>
 extern "C" {
 #  include <fuse/fuse.h>
 }

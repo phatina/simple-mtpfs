@@ -17,6 +17,7 @@
 
 #include <config.h>
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 extern "C" {
 #  include <libmtp.h>
