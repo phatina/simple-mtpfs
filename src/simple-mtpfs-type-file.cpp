@@ -16,6 +16,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <config.h>
+#include <cstdlib.h>
 #include "simple-mtpfs-type-file.h"
 
 TypeFile::TypeFile():
