@@ -569,7 +569,9 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
 int SMTPFileSystem::statfs(const char *path, struct statvfs *stat_info)
 {
     uint64_t bs = 1024;
+    // XXX: linux coreutils still use bsize member to calculate free space
     stat_info->f_bsize = static_cast<unsigned long>(bs);
+    stat_info->f_frsize = static_cast<unsigned long>(bs);
     stat_info->f_blocks = m_device.storageTotalSize() / bs;
     stat_info->f_bavail = m_device.storageFreeSize() / bs;
     stat_info->f_bfree = stat_info->f_bavail;
