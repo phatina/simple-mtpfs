@@ -47,7 +47,6 @@ public:
     int dirRemove(const std::string &path);
     int dirRename(const std::string &oldpath, const std::string &newpath);
     const TypeDir *dirFetchContent(std::string path);
-    const TypeDir *dirGetContent(const std::string &path);
 
     int rename(const std::string &oldpath, const std::string &newpath);
 

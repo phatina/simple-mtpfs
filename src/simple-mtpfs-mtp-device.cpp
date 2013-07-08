@@ -161,22 +161,6 @@ bool MTPDevice::enumStorages()
     return true;
 }
 
-const TypeDir *MTPDevice::dirGetContent(const std::string &path)
-{
-    if (path == "/")
-        return &m_root_dir;
-
-    std::string member;
-    std::istringstream ss(path);
-    const TypeDir *dir = &m_root_dir;
-    while (std::getline(ss, member, '/') && dir) {
-        if (member.empty())
-            continue;
-        dir = dir->dir(member);
-    }
-    return dir;
-}
-
 const TypeDir *MTPDevice::dirFetchContent(std::string path)
 {
     if (!m_root_dir.isFetched()) {
