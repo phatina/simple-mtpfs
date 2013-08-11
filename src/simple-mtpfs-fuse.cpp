@@ -340,11 +340,6 @@ bool SMTPFileSystem::exec()
     if (!m_options.m_good)
         return false;
 
-    if (m_options.m_list_devices) {
-        m_device.listDevices();
-        return true;
-    }
-
     if (m_options.m_version || m_options.m_help)
         return true;
 
