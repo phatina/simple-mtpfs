@@ -662,7 +662,6 @@ char *SMTPFileSystem::expandTmpDir(char *tmp)
             tmp_dir += '/';
     }
     tmp_dir += "simple-mtpfs-XXXXXX";
-    std::cout << tmp_dir << "\n";
     return mktemp(strdup(tmp_dir.c_str()));
 }
 
