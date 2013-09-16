@@ -35,7 +35,7 @@ compiler to support c++11 standard.
 
 To install the driver, follow these steps:
 
-  mkdir build && build
+  mkdir build && cd build
   ../configure
   make
   make install (as root)
