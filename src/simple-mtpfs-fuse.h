@@ -50,8 +50,8 @@ private:
         char *m_tmp_dir;
 #ifdef HAVE_LIBUSB1
         char *m_device_file;
-        char *m_mount_point;
 #endif // HAVE_LIBUSB1
+        char *m_mount_point;
 
         SMTPFileSystemOptions();
         ~SMTPFileSystemOptions();

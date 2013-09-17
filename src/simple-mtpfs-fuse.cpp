@@ -175,8 +175,8 @@ SMTPFileSystem::SMTPFileSystemOptions::SMTPFileSystemOptions()
     , m_tmp_dir(nullptr)
 #ifdef HAVE_LIBUSB1
     , m_device_file(nullptr)
-    , m_mount_point(nullptr)
 #endif // HAVE_LIBUSB1
+    , m_mount_point(nullptr)
 {
 }
 
@@ -185,29 +185,38 @@ SMTPFileSystem::SMTPFileSystemOptions::~SMTPFileSystemOptions()
     free(static_cast<void*>(m_tmp_dir));
 #ifdef HAVE_LIBUSB1
     free(static_cast<void*>(m_device_file));
-    free(static_cast<void*>(m_mount_point));
 #endif // HAVE_LIBUSB1
+    free(static_cast<void*>(m_mount_point));
 }
 
 // -----------------------------------------------------------------------------
 
-#ifdef HAVE_LIBUSB1
 int SMTPFileSystem::SMTPFileSystemOptions::opt_proc(void *data, const char *arg, int key,
     struct fuse_args *outargs)
 {
     SMTPFileSystemOptions *options = static_cast<SMTPFileSystemOptions*>(data);
 
     if (key == FUSE_OPT_KEY_NONOPT) {
-        if (options->m_mount_point) {
+#ifdef HAVE_LIBUSB1
+        if (options->m_mount_point && !options->m_device_file) {
             options->m_device_file = options->m_mount_point;
             options->m_mount_point = nullptr;
+        } else if (options->m_mount_point && options->m_device_file) {
+            // Unknown positional argument supplied
+            return -1;
         }
+#else
+        if (options->m_mount_point) {
+            // Unknown positional argument supplied
+            return -1;
+        }
+#endif //HAVE_LIBUSB1
+
         fuse_opt_add_opt(&options->m_mount_point, arg);
         return 0;
     }
     return 1;
 }
-#endif //HAVE_LIBUSB1
 
 std::unique_ptr<SMTPFileSystem> SMTPFileSystem::s_instance;
 
@@ -292,12 +301,7 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
 
     fuse_opt_free_args(&m_args);
     m_args = FUSE_ARGS_INIT(argc, argv);
-#ifdef HAVE_LIBUSB1
-    fuse_opt_proc_t opt_proc = SMTPFileSystemOptions::opt_proc;
-#else
-    fuse_opt_proc_t opt_proc = nullptr;
-#endif // HAVE_LIBUSB1
-    if (fuse_opt_parse(&m_args, &m_options, smtpfs_opts, opt_proc) == -1) {
+    if (fuse_opt_parse(&m_args, &m_options, smtpfs_opts, SMTPFileSystemOptions::opt_proc) == -1) {
         m_options.m_good = false;
         return false;
     }
