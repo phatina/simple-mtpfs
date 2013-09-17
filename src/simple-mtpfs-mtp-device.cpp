@@ -31,6 +31,7 @@ extern "C" {
 #include "simple-mtpfs-libmtp.h"
 #include "simple-mtpfs-log.h"
 #include "simple-mtpfs-mtp-device.h"
+#include "simple-mtpfs-util.h"
 
 uint32_t MTPDevice::s_root_node = ~0;
 
@@ -99,6 +100,33 @@ bool MTPDevice::connect(int dev_no)
     logmsg("Connected.\n");
     return true;
 }
+
+#ifdef HAVE_LIBUSB1
+bool MTPDevice::connect(const std::string &dev_file)
+{
+    if (m_device) {
+        logerr("Already connected.\n");
+        return true;
+    }
+
+    LIBMTP_raw_device_t *device = smtpfs_raw_device_new(dev_file);
+    if (!device) {
+        logerr("Could not open such device '", dev_file, ".\n");
+        return false;
+    }
+
+    m_device = LIBMTP_Open_Raw_Device_Uncached(device);
+    smtpfs_raw_device_free(device);
+    if (!m_device)
+        return false;
+
+    if (!enumStorages())
+        return false;
+
+    logmsg("Connection.\n");
+    return true;
+}
+#endif
 
 void MTPDevice::disconnect()
 {

@@ -18,6 +18,7 @@
 #ifndef SMTPFS_FUSE_H
 #define SMTPFS_FUSE_H
 
+#include <config.h>
 #include <memory>
 #include <string>
 #include <cstdlib>
@@ -45,25 +46,30 @@ private:
         int m_verbose;
         int m_enable_move;
         int m_list_devices;
-        int m_device;
+        int m_device_no;
         char *m_tmp_dir;
+#ifdef HAVE_LIBUSB1
+        char *m_device_file;
+        char *m_mount_point;
+#endif // HAVE_LIBUSB1
 
-        SMTPFileSystemOptions():
-            m_good(false),
-            m_help(false),
-            m_version(false),
-            m_verbose(false),
-            m_enable_move(false),
-            m_list_devices(false),
-            m_device(1),
-            m_tmp_dir(nullptr) {}
-        ~SMTPFileSystemOptions() { free(static_cast<void*>(m_tmp_dir)); }
+        SMTPFileSystemOptions();
+        ~SMTPFileSystemOptions();
 
         static int opt_proc(void *data, const char *arg, int key,
             struct fuse_args *outargs);
     };
 
     SMTPFileSystem();
+
+    enum {
+        KEY_ENABLE_MOVE,
+        KEY_DEVICE_NO,
+        KEY_LIST_DEVICES,
+        KEY_VERBOSE,
+        KEY_VERSION,
+        KEY_HELP
+    };
 
 public:
     ~SMTPFileSystem();
@@ -120,8 +126,5 @@ private:
     SMTPFileSystemOptions m_options;
     MTPDevice m_device;
 };
-
-std::string smtpfs_dirname(const std::string &path);
-std::string smtpfs_basename(const std::string &path);
 
 #endif // SMTPFS_FUSE_H

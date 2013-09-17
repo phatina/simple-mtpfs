@@ -16,10 +16,18 @@ AX_CXX_COMPILE_STDCXX_11([noext])
 AC_CHECK_LIB([mtp], [LIBMTP_Init], [], [AC_MSG_ERROR([libmtp not found])])
 AC_CHECK_HEADERS([libmtp.h])
 AC_CHECK_FUNCS([fdatasync])
-PKG_CHECK_MODULES([FUSE], [fuse >= 2.8])
 
+PKG_CHECK_MODULES([FUSE], [fuse >= 2.8])
 AC_SUBST([FUSE_CFLAGS])
 AC_SUBST([FUSE_LIBS])
+
+PKG_CHECK_MODULES(
+    [LIBUSB1],
+    [libusb-1.0 >= 1.0.0],
+    [AC_DEFINE([HAVE_LIBUSB1], [], [Have libusb 1.0])]
+)
+AC_SUBST([LIBUSB1_CFLAGS])
+AC_SUBST([LIBUSB1_LIBS])
 
 AC_OUTPUT([
     makefile

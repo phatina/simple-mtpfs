@@ -21,6 +21,7 @@
 #include <map>
 #include <mutex>
 #include <stack>
+#include <string>
 #include <vector>
 extern "C" {
 #  include <libmtp.h>
@@ -35,6 +36,7 @@ public:
     ~MTPDevice();
 
     bool connect(int dev_no = 0);
+    bool connect(const std::string &dev_file);
     void disconnect();
 
     bool listDevices();

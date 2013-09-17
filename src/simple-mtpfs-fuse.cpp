@@ -31,22 +31,7 @@ extern "C" {
 }
 #include "simple-mtpfs-fuse.h"
 #include "simple-mtpfs-log.h"
-
-std::string smtpfs_dirname(const std::string &path)
-{
-    char *str = strdup(path.c_str());
-    std::string result(dirname(str));
-    free(static_cast<void*>(str));
-    return result;
-}
-
-std::string smtpfs_basename(const std::string &path)
-{
-    char *str = strdup(path.c_str());
-    std::string result(basename(str));
-    free(static_cast<void*>(str));
-    return result;
-}
+#include "simple-mtpfs-util.h"
 
 int wrap_getattr(const char *path, struct stat *statbuf)
 {
@@ -179,6 +164,51 @@ int wrap_fgetattr(const char *path, struct stat *buf, struct fuse_file_info *fil
 
 // -----------------------------------------------------------------------------
 
+SMTPFileSystem::SMTPFileSystemOptions::SMTPFileSystemOptions()
+    : m_good(false)
+    , m_help(false)
+    , m_version(false)
+    , m_verbose(false)
+    , m_enable_move(false)
+    , m_list_devices(false)
+    , m_device_no(1)
+    , m_tmp_dir(nullptr)
+#ifdef HAVE_LIBUSB1
+    , m_device_file(nullptr)
+    , m_mount_point(nullptr)
+#endif // HAVE_LIBUSB1
+{
+}
+
+SMTPFileSystem::SMTPFileSystemOptions::~SMTPFileSystemOptions()
+{
+    free(static_cast<void*>(m_tmp_dir));
+#ifdef HAVE_LIBUSB1
+    free(static_cast<void*>(m_device_file));
+    free(static_cast<void*>(m_mount_point));
+#endif // HAVE_LIBUSB1
+}
+
+// -----------------------------------------------------------------------------
+
+#ifdef HAVE_LIBUSB1
+int SMTPFileSystem::SMTPFileSystemOptions::opt_proc(void *data, const char *arg, int key,
+    struct fuse_args *outargs)
+{
+    SMTPFileSystemOptions *options = static_cast<SMTPFileSystemOptions*>(data);
+
+    if (key == FUSE_OPT_KEY_NONOPT) {
+        if (options->m_mount_point) {
+            options->m_device_file = options->m_mount_point;
+            options->m_mount_point = nullptr;
+        }
+        fuse_opt_add_opt(&options->m_mount_point, arg);
+        return 0;
+    }
+    return 1;
+}
+#endif //HAVE_LIBUSB1
+
 std::unique_ptr<SMTPFileSystem> SMTPFileSystem::s_instance;
 
 SMTPFileSystem *SMTPFileSystem::instance()
@@ -243,7 +273,7 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
 
     static struct fuse_opt smtpfs_opts[] = {
         SMTPFS_OPT_KEY("enable-move", m_enable_move, 1),
-        SMTPFS_OPT_KEY("--device %i", m_device, 0),
+        SMTPFS_OPT_KEY("--device %i", m_device_no, 0),
         SMTPFS_OPT_KEY("-l", m_list_devices, 1),
         SMTPFS_OPT_KEY("--list-devices", m_list_devices, 1),
         SMTPFS_OPT_KEY("-v", m_verbose, 1),
@@ -262,22 +292,31 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
 
     fuse_opt_free_args(&m_args);
     m_args = FUSE_ARGS_INIT(argc, argv);
-    if (fuse_opt_parse(&m_args, &m_options, smtpfs_opts, nullptr) == -1) {
+#ifdef HAVE_LIBUSB1
+    fuse_opt_proc_t opt_proc = SMTPFileSystemOptions::opt_proc;
+#else
+    fuse_opt_proc_t opt_proc = nullptr;
+#endif // HAVE_LIBUSB1
+    if (fuse_opt_parse(&m_args, &m_options, smtpfs_opts, opt_proc) == -1) {
         m_options.m_good = false;
         return false;
     }
-
-    fuse_opt_add_arg(&m_args, "-s");
 
     if (m_options.m_version || m_options.m_help || m_options.m_list_devices) {
         m_options.m_good = true;
         return true;
     }
 
-    if (--m_options.m_device < 0) {
+    if (--m_options.m_device_no < 0) {
         m_options.m_good = false;
         return false;
     }
+
+#ifdef HAVE_LIBUSB1
+    if (m_options.m_mount_point)
+        fuse_opt_add_arg(&m_args, m_options.m_mount_point);
+#endif // HAVE_LIBUSB1
+    fuse_opt_add_arg(&m_args, "-s");
 
     if (m_options.m_tmp_dir)
         removeTmpDir();
@@ -298,6 +337,14 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         fuse_opt_add_arg(&m_args, "-f");
     }
 
+#ifdef HAVE_LIBUSB1
+    // device file and -- device are mutually exclusive, fail if both set
+    if (m_options.m_device_no && m_options.m_device_file) {
+        m_options.m_good = false;
+        return false;
+    }
+#endif // HAVE_LIBUSB1
+
     m_options.m_good = true;
     return true;
 }
@@ -307,7 +354,11 @@ void SMTPFileSystem::printHelp() const
     struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
     struct fuse_operations tmp_operations;
     memset(&tmp_operations, 0, sizeof(tmp_operations));
-    std::cout << "usage: " << m_args.argv[0] << " mountpoint [options]\n\n"
+    std::cout << "usage: " << m_args.argv[0]
+#ifdef HAVE_LIBUSB1
+              << " <source>"
+#endif // HAVE_LIBUSB1
+              << " mountpoint [options]\n\n"
         << "general options:\n"
         << "    -o opt,[opt...]        mount options\n"
         << "    -h   --help            print help\n"
@@ -343,8 +394,18 @@ bool SMTPFileSystem::exec()
     if (m_options.m_version || m_options.m_help)
         return true;
 
-    if (!m_device.connect(m_options.m_device))
-        return false;
+#ifdef HAVE_LIBUSB1
+    if (m_options.m_device_file) {
+        // Try to use device file first, if provided
+        if (!m_device.connect(m_options.m_device_file))
+            return false;
+    } else
+#endif // HAVE_LIBUSB1
+    {
+        // Connect to MTP device by order number, if no device file supplied
+        if (!m_device.connect(m_options.m_device_no))
+            return false;
+    }
     m_device.enableMove(m_options.m_enable_move);
     if (fuse_main(m_args.argc, m_args.argv, &m_fuse_operations, nullptr) > 0)
         return false;

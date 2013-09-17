@@ -15,33 +15,22 @@
 *   along with this program. If not, see <http://www.gnu.org/licenses/>.
 * ***** END LICENSE BLOCK ***** */
 
+#ifndef SIMPLE_MTPFS_UTIL
+#define SIMPLE_MTPFS_UTIL
+
 #include <config.h>
-#include <iostream>
-#include "simple-mtpfs-fuse.h"
-#include "simple-mtpfs-util.h"
+#include <string>
 
-int main(int argc, char **argv)
-{
-    SMTPFileSystem *filesystem = SMTPFileSystem::instance();
+#ifdef HAVE_LIBUSB1
+#  include <libmtp.h>
+#endif // HAVE_LIBUSB1
 
-    if (!filesystem->parseOptions(argc, argv)) {
-        std::cout << "Wrong usage! See `" << smtpfs_basename(argv[0])
-            << " -h' for details\n";
-        return 1;
-    }
+std::string smtpfs_dirname(const std::string &path);
+std::string smtpfs_basename(const std::string &path);
 
-    if (filesystem->isHelp()) {
-        filesystem->printHelp();
-        return 0;
-    }
+#ifdef HAVE_LIBUSB1
+LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path);
+void smtpfs_raw_device_free(LIBMTP_raw_device_t *device);
+#endif // HAVE_LIBUSB1
 
-    if (filesystem->isVersion()) {
-        filesystem->printVersion();
-        return 0;
-    }
-
-    if (filesystem->isListDevices())
-        return !filesystem->listDevices();
-
-    return !filesystem->exec();
-}
+#endif // SIMPLE_MTPFS_UTIL
