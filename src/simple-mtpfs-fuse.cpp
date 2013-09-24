@@ -273,7 +273,6 @@ SMTPFileSystem::SMTPFileSystem():
 SMTPFileSystem::~SMTPFileSystem()
 {
     fuse_opt_free_args(&m_args);
-    removeTmpDir();
 }
 
 bool SMTPFileSystem::parseOptions(int argc, char **argv)
@@ -321,20 +320,6 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         fuse_opt_add_arg(&m_args, m_options.m_mount_point);
 #endif // HAVE_LIBUSB1
     fuse_opt_add_arg(&m_args, "-s");
-
-    if (m_options.m_tmp_dir)
-        removeTmpDir();
-    m_options.m_tmp_dir = expandTmpDir(getenv("TMPDIR"));
-    if (!m_options.m_tmp_dir) {
-        m_options.m_good = false;
-        return false;
-    }
-
-    m_tmp_files_pool.setTmpDir(m_options.m_tmp_dir);
-    if (::mkdir(static_cast<const char*>(m_options.m_tmp_dir), S_IRWXU) != 0) {
-        m_options.m_good = false;
-        return false;
-    }
 
     if (m_options.m_verbose) {
         Logger::setGlobalVerbose();
@@ -401,6 +386,9 @@ bool SMTPFileSystem::exec()
     if (m_options.m_version || m_options.m_help)
         return true;
 
+    if (!createTmpDir())
+        return false;
+
 #ifdef HAVE_LIBUSB1
     if (m_options.m_device_file) {
         // Try to use device file first, if provided
@@ -417,6 +405,9 @@ bool SMTPFileSystem::exec()
     if (fuse_main(m_args.argc, m_args.argv, &m_fuse_operations, nullptr) > 0)
         return false;
     m_device.disconnect();
+
+    removeTmpDir();
+
     return true;
 }
 
@@ -753,6 +744,22 @@ bool SMTPFileSystem::removeDir(const std::string &dirname)
     }
     ::closedir(dir);
     ::remove(dirname.c_str());
+    return true;
+}
+
+bool SMTPFileSystem::createTmpDir()
+{
+    if (m_options.m_tmp_dir)
+        removeTmpDir();
+
+    m_options.m_tmp_dir = expandTmpDir(getenv("TMPDIR"));
+    if (!m_options.m_tmp_dir)
+        return false;
+
+    m_tmp_files_pool.setTmpDir(m_options.m_tmp_dir);
+    if (::mkdir(static_cast<const char*>(m_options.m_tmp_dir), S_IRWXU) != 0)
+        return false;
+
     return true;
 }
 

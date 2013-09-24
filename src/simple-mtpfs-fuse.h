@@ -117,6 +117,7 @@ private:
     static char *expandTmpDir(char *tmp);
     static bool removeDir(const std::string &dirname);
 
+    bool createTmpDir();
     bool removeTmpDir();
 
     static std::unique_ptr<SMTPFileSystem> s_instance;
