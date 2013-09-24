@@ -522,15 +522,34 @@ int SMTPFileSystem::truncate(const char *path, off_t new_size)
 {
     const std::string tmp_path = m_tmp_files_pool.makeTmpPath(std::string(path));
     int rval = m_device.filePull(std::string(path), tmp_path);
-    if (rval != 0)
-        return rval;
+    if (rval != 0) {
+        ::unlink(tmp_path.c_str());
+        errno = rval;
+        return -1;
+    }
+
     rval = ::truncate(tmp_path.c_str(), new_size);
-    if (rval != 0)
-        return -errno;
-    rval = m_device.fileRemove(std::string(path));
-    if (rval != 0)
+    if (rval != 0) {
+        ::unlink(tmp_path.c_str());
         return rval;
-    return m_device.filePush(tmp_path, std::string(path));
+    }
+
+    rval = m_device.fileRemove(std::string(path));
+    if (rval != 0) {
+        ::unlink(tmp_path.c_str());
+        errno = rval;
+        return -1;
+    }
+
+    rval = m_device.filePush(tmp_path, std::string(path));
+    ::unlink(tmp_path.c_str());
+
+    if (rval != 0) {
+        errno = rval;
+        return -1;
+    }
+
+    return 0;
 }
 
 int SMTPFileSystem::utime(const char *path, struct utimbuf *ubuf)
