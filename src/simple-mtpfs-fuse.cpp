@@ -596,13 +596,18 @@ int SMTPFileSystem::open(const char *path, struct fuse_file_info *file_info)
 
     std::string tmp_file = m_tmp_files_pool.makeTmpPath(std::string(path));
     int rval = m_device.filePull(std::string(path), tmp_file);
-    if (rval != 0)
-        return rval;
+    if (rval != 0) {
+        errno = rval;
+        return -1;
+    }
+
     int fd = ::open(tmp_file.c_str(), file_info->flags);
     if (fd < 0)
-        return -errno;
+        return -1;
+
     file_info->fh = fd;
     m_tmp_files_pool.addFile(TypeTmpFile(std::string(path), tmp_file, fd));
+
     return 0;
 }
 
