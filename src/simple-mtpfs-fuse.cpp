@@ -707,10 +707,14 @@ int SMTPFileSystem::readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     off_t offset, struct fuse_file_info *file_info)
 {
     const TypeDir *content = m_device.dirFetchContent(std::string(path));
-    if (!content)
-        return -ENOENT;
+    if (!content) {
+        errno = ENOENT;
+        return -1;
+    }
+
     const std::set<TypeDir> dirs = content->dirs();
     const std::set<TypeFile> files = content->files();
+
     for (const TypeDir &d : dirs) {
         struct stat st;
         memset(&st, 0, sizeof(st));
@@ -718,6 +722,7 @@ int SMTPFileSystem::readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         st.st_mode = S_IFDIR | 0775;
         filler(buf, d.name().c_str(), &st, 0);
     }
+
     for (const TypeFile &f : files) {
         struct stat st;
         memset(&st, 0, sizeof(st));
@@ -725,6 +730,7 @@ int SMTPFileSystem::readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         st.st_mode = S_IFREG | 0664;
         filler(buf, f.name().c_str(), &st, 0);
     }
+
     return 0;
 }
 
