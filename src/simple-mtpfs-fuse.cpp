@@ -430,8 +430,11 @@ int SMTPFileSystem::getattr(const char *path, struct stat *buf)
         std::string tmp_path(smtpfs_dirname(path));
         std::string tmp_file(smtpfs_basename(path));
         const TypeDir *content = m_device.dirFetchContent(tmp_path);
-        if (!content)
-            return -ENOENT;
+        if (!content) {
+            errno = ENOENT;
+            return -1;
+        }
+
         if (content->dir(tmp_file)) {
             const TypeDir *dir = content->dir(tmp_file);
             buf->st_ino = dir->id();
@@ -448,9 +451,11 @@ int SMTPFileSystem::getattr(const char *path, struct stat *buf)
             buf->st_ctime = buf->st_mtime;
             buf->st_atime = buf->st_mtime;
         } else {
-            return -ENOENT;
+            errno = ENOENT;
+            return -1;
         }
     }
+
     return 0;
 }
 
