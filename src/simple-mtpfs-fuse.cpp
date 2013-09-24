@@ -757,9 +757,7 @@ int SMTPFileSystem::ftruncate(const char *path, off_t offset,
 
 int SMTPFileSystem::fgetattr(const char *path, struct stat *buf, fuse_file_info *file_info)
 {
-    if (::fstat(file_info->fh, buf) != 0)
-        return -errno;
-    return 0;
+    return ::fstat(file_info->fh, buf);
 }
 
 bool SMTPFileSystem::removeDir(const std::string &dirname)
