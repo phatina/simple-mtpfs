@@ -456,18 +456,23 @@ int SMTPFileSystem::getattr(const char *path, struct stat *buf)
 
 int SMTPFileSystem::mknod(const char *path, mode_t mode, dev_t dev)
 {
-    if (!S_ISREG(mode))
-        return -EINVAL;
+    if (!S_ISREG(mode)) {
+        errno = EINVAL;
+        return -1;
+    }
+
     std::string tmp_path = m_tmp_files_pool.makeTmpPath(std::string(path));
     int rval = ::open(tmp_path.c_str(), O_CREAT | O_WRONLY, mode);
     if (rval < 0)
-        return -errno;
-    rval = close(rval);
+        return -1;
+
+    rval = ::close(rval);
     if (rval < 0)
-        return -errno;
+        return -1;
+
     m_device.filePush(tmp_path, std::string(path));
     ::unlink(tmp_path.c_str());
-    return rval;
+    return 0;
 }
 
 int SMTPFileSystem::mkdir(const char *path, mode_t mode)
