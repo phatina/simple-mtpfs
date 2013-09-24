@@ -695,8 +695,11 @@ int SMTPFileSystem::fsync(const char *path, int datasync,
 int SMTPFileSystem::opendir(const char *path, struct fuse_file_info *file_info)
 {
     const TypeDir *content = m_device.dirFetchContent(std::string(path));
-    if (!content)
-        return -ENOENT;
+    if (!content) {
+        errno = ENOENT;
+        return -1;
+    }
+
     return 0;
 }
 
