@@ -492,19 +492,30 @@ int SMTPFileSystem::rename(const char *path, const char *newpath)
     if (tmp_old_dirname == tmp_new_dirname)
         return m_device.rename(std::string(path), std::string(newpath));
 
-    if (!m_options.m_enable_move)
-        return -EPERM;
+    if (!m_options.m_enable_move) {
+        errno = EPERM;
+        return -1;
+    }
 
     const std::string tmp_file = m_tmp_files_pool.makeTmpPath(std::string(newpath));
     int rval = m_device.filePull(std::string(path), tmp_file);
-    if (rval != 0)
-        return rval;
+    if (rval != 0) {
+        errno = rval;
+        return -1;
+    }
+
     rval = m_device.filePush(tmp_file, std::string(newpath));
-    if (rval != 0)
-        return rval;
+    if (rval != 0) {
+        errno = rval;
+        return -1;
+    }
+
     rval = m_device.fileRemove(std::string(path));
-    if (rval != 0)
-        return rval;
+    if (rval != 0) {
+        errno = rval;
+        return -1;
+    }
+
     return 0;
 }
 
