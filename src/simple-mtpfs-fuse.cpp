@@ -577,12 +577,15 @@ int SMTPFileSystem::utime(const char *path, struct utimbuf *ubuf)
 int SMTPFileSystem::create(const char *path, mode_t mode, fuse_file_info *file_info)
 {
     const std::string tmp_path = m_tmp_files_pool.makeTmpPath(std::string(path));
+
     int rval = ::creat(tmp_path.c_str(), mode);
     if (rval < 0)
-        return -errno;
+        return -1;
+
     file_info->fh = rval;
     m_tmp_files_pool.addFile(TypeTmpFile(std::string(path), tmp_path, rval, true));
     m_device.filePush(tmp_path, std::string(path));
+
     return 0;
 }
 
