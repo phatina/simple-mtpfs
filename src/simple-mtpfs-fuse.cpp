@@ -623,12 +623,16 @@ int SMTPFileSystem::read(const char *path, char *buf, size_t size,
 int SMTPFileSystem::write(const char *path, const char *buf, size_t size,
     off_t offset, struct fuse_file_info *file_info)
 {
+    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(static_cast<int>(file_info->fh));
+    if (!tmp_file) {
+        errno = EINVAL;
+        return -1;
+    }
+
     int rval = ::pwrite(file_info->fh, buf, size, offset);
     if (rval < 0)
-        return -errno;
-    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(static_cast<int>(file_info->fh));
-    if (!tmp_file)
-        return -EINVAL;
+        return -1;
+
     const_cast<TypeTmpFile*>(tmp_file)->setModified();
     return rval;
 }
