@@ -556,13 +556,21 @@ int SMTPFileSystem::utime(const char *path, struct utimbuf *ubuf)
 {
     std::string tmp_basename(smtpfs_basename(std::string(path)));
     std::string tmp_dirname(smtpfs_dirname(std::string(path)));
+
     const TypeDir *parent = m_device.dirFetchContent(tmp_dirname);
-    if (!parent)
-        return -ENOENT;
+    if (!parent) {
+        errno = ENOENT;
+        return -1;
+    }
+
     const TypeFile *file = parent->file(tmp_basename);
-    if (!file)
-        return -ENOENT;
+    if (!file) {
+        errno = ENOENT;
+        return -1;
+    }
+
     const_cast<TypeFile*>(file)->setModificationDate(ubuf->modtime);
+
     return 0;
 }
 
