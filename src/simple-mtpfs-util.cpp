@@ -57,14 +57,14 @@ std::string smtpfs_basename(const std::string &path)
     return result;
 }
 
-#ifdef HAVE_LIBUSB1
-std::string smtpfs_realpath(std::string path)
+std::string smtpfs_realpath(const std::string &path)
 {
     char buf[PATH_MAX + 1];
     char *real_path = realpath(path.c_str(), buf);
     return std::string(real_path ? buf : "");
 }
 
+#ifdef HAVE_LIBUSB1
 LIBMTP_raw_device_t *smtpfs_raw_device_new_priv(libusb_device *usb_device)
 {
     if (!usb_device)

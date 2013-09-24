@@ -709,21 +709,6 @@ int SMTPFileSystem::fgetattr(const char *path, struct stat *buf, fuse_file_info 
     return 0;
 }
 
-char *SMTPFileSystem::expandTmpDir(char *tmp)
-{
-    std::string tmp_dir(tmp ? tmp : "/tmp/");
-    if (tmp) {
-        tmp_dir = tmp;
-        auto it = tmp_dir.find('~');
-        for (; it != std::string::npos; it = tmp_dir.find('~'))
-            tmp_dir.replace(it, 1, getenv("HOME"));
-        if (tmp_dir[tmp_dir.length() - 1] != '/')
-            tmp_dir += '/';
-    }
-    tmp_dir += "simple-mtpfs-XXXXXX";
-    return mktemp(strdup(tmp_dir.c_str()));
-}
-
 bool SMTPFileSystem::removeDir(const std::string &dirname)
 {
     DIR *dir;
@@ -749,13 +734,21 @@ bool SMTPFileSystem::removeDir(const std::string &dirname)
 
 bool SMTPFileSystem::createTmpDir()
 {
-    if (m_options.m_tmp_dir)
-        removeTmpDir();
+    removeTmpDir();
 
-    m_options.m_tmp_dir = expandTmpDir(getenv("TMPDIR"));
-    if (!m_options.m_tmp_dir)
-        return false;
+    const char *c_tmp = getenv("TMP");
+    std::string tmp_dir;
+    if (c_tmp) {
+        tmp_dir = smtpfs_realpath(c_tmp);
+    } else {
+        c_tmp = getenv("TMPDIR");
+        if (!c_tmp)
+            c_tmp = "/tmp";
+        tmp_dir = smtpfs_realpath(c_tmp);
+    }
 
+    tmp_dir += "/simple-mtpfs-XXXXXX";
+    m_options.m_tmp_dir = ::mktemp(::strdup(tmp_dir.c_str()));
     m_tmp_files_pool.setTmpDir(m_options.m_tmp_dir);
     if (::mkdir(static_cast<const char*>(m_options.m_tmp_dir), S_IRWXU) != 0)
         return false;

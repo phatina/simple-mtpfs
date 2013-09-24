@@ -114,7 +114,6 @@ public:
     int create(const char *path, mode_t mode, fuse_file_info *file_info);
 
 private:
-    static char *expandTmpDir(char *tmp);
     static bool removeDir(const std::string &dirname);
 
     bool createTmpDir();

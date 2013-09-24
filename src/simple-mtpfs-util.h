@@ -27,6 +27,7 @@
 
 std::string smtpfs_dirname(const std::string &path);
 std::string smtpfs_basename(const std::string &path);
+std::string smtpfs_realpath(const std::string &path);
 
 bool smtpfs_check_dir(const std::string &path);
 
