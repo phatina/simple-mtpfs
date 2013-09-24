@@ -750,7 +750,7 @@ int SMTPFileSystem::ftruncate(const char *path, off_t offset,
 {
     const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(file_info->fh);
     if (::ftruncate(file_info->fh, offset) != 0)
-        return -errno;
+        return -1;
     const_cast<TypeTmpFile*>(tmp_file)->setModified();
     return 0;
 }
