@@ -641,7 +641,7 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
 {
     int rval = ::close(file_info->fh);
     if (rval < 0)
-        return rval;
+        return -1;
 
     if (std::string(path) == std::string("-"))
         return 0;
@@ -652,11 +652,16 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
     m_tmp_files_pool.removeFile(tmp_file->fileDescriptor());
     if (modif) {
         int push_rval = m_device.filePush(tmp_path, std::string(path));
-        if (push_rval != 0)
-            return push_rval;
-        ::unlink(tmp_path.c_str());
+        if (push_rval != 0) {
+            ::unlink(tmp_path.c_str());
+            errno = push_rval;
+            return -1;
+        }
     }
-    return rval;
+
+    ::unlink(tmp_path.c_str());
+
+    return 0;
 }
 
 int SMTPFileSystem::statfs(const char *path, struct statvfs *stat_info)
