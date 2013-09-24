@@ -24,6 +24,7 @@
 #endif // HAVE_LIBUSB1
 extern "C" {
 #  include <libgen.h>
+#  include <sys/stat.h>
 }
 #ifdef HAVE_LIBUSB1
 #  include <climits>
@@ -145,3 +146,15 @@ void smtpfs_raw_device_free(LIBMTP_raw_device_t *device)
     free(static_cast<void*>(device));
 }
 #endif // HAVE_LIBUSB1
+
+bool smtpfs_check_dir(const std::string &path)
+{
+    struct stat buf;
+    if (::stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode)
+        && ::access(path.c_str(), R_OK | W_OK | X_OK) == 0)
+    {
+        return true;
+    }
+
+    return false;
+}

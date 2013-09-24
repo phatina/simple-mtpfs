@@ -395,6 +395,9 @@ bool SMTPFileSystem::exec()
     if (!m_options.m_good)
         return false;
 
+    if (!smtpfs_check_dir(m_options.m_mount_point))
+        return false;
+
     if (m_options.m_version || m_options.m_help)
         return true;
 

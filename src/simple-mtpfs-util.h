@@ -28,6 +28,8 @@
 std::string smtpfs_dirname(const std::string &path);
 std::string smtpfs_basename(const std::string &path);
 
+bool smtpfs_check_dir(const std::string &path);
+
 #ifdef HAVE_LIBUSB1
 LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path);
 void smtpfs_raw_device_free(LIBMTP_raw_device_t *device);
