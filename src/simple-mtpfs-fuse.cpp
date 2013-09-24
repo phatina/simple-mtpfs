@@ -616,7 +616,7 @@ int SMTPFileSystem::read(const char *path, char *buf, size_t size,
 {
     int rval = ::pread(file_info->fh, buf, size, offset);
     if (rval < 0)
-        return -errno;
+        return -1;
     return rval;
 }
 
