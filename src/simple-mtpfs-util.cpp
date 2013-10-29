@@ -36,6 +36,44 @@ extern "C" {
 #endif // HAVE_LIBUSB1
 #include "simple-mtpfs-util.h"
 
+const std::string devnull = "/dev/null";
+
+bool StreamHelper::s_enabled = false;
+int StreamHelper::s_stdout = -1;
+int StreamHelper::s_stderr = -1;
+
+void StreamHelper::on()
+{
+    if (!s_enabled)
+        return;
+
+    freopen(devnull.c_str(), "w", stdout);
+    freopen(devnull.c_str(), "w", stderr);
+    dup2(s_stdout, fileno(stdout));
+    dup2(s_stderr, fileno(stderr));
+    close(s_stdout);
+    close(s_stderr);
+    setvbuf(stdout, NULL, _IOLBF, 0);
+    setvbuf(stderr, NULL, _IOLBF, 0);
+
+    s_enabled = false;
+}
+
+void StreamHelper::off()
+{
+    if (s_enabled)
+        return;
+
+    fflush(stdout);
+    fflush(stderr);
+    s_stdout = dup(fileno(stdout));
+    s_stderr = dup(fileno(stderr));
+    freopen(devnull.c_str(), "w", stdout);
+    freopen(devnull.c_str(), "w", stderr);
+
+    s_enabled = true;
+}
+
 #ifdef HAVE_LIBUSB1
 const char smtpfs_path_delimiter = '/';
 const std::string smtpfs_devbususb = "/dev/bus/usb/";

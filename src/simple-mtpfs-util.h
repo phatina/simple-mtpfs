@@ -25,6 +25,20 @@
 #  include <libmtp.h>
 #endif // HAVE_LIBUSB1
 
+class StreamHelper
+{
+public:
+    StreamHelper() = delete;
+
+    static void on();
+    static void off();
+
+private:
+    static bool s_enabled;
+    static int s_stdout;
+    static int s_stderr;
+};
+
 std::string smtpfs_dirname(const std::string &path);
 std::string smtpfs_basename(const std::string &path);
 std::string smtpfs_realpath(const std::string &path);
