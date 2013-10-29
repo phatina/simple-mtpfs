@@ -58,8 +58,12 @@ bool MTPDevice::connect(int dev_no)
 
     int raw_devices_cnt;
     LIBMTP_raw_device_t *raw_devices;
+
+    // Do not output LIBMTP debug stuff
+    StreamHelper::off();
     LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
         &raw_devices, &raw_devices_cnt);
+    StreamHelper::off();
 
     if (dev_no > raw_devices_cnt) {
         free(static_cast<void*>(raw_devices));
@@ -89,10 +93,16 @@ bool MTPDevice::connect(int dev_no)
         return false;
     }
 
+    // Do not output LIBMTP debug stuff
+    StreamHelper::off();
     m_device = LIBMTP_Open_Raw_Device_Uncached(&raw_devices[dev_no]);
+    StreamHelper::on();
     free(static_cast<void*>(raw_devices));
-    if (!m_device)
+
+    if (!m_device) {
+        LIBMTP_Dump_Errorstack(m_device);
         return false;
+    }
 
     if (!enumStorages())
         return false;
@@ -115,10 +125,16 @@ bool MTPDevice::connect(const std::string &dev_file)
         return false;
     }
 
+    // Do not output LIBMTP debug stuff
+    StreamHelper::off();
     m_device = LIBMTP_Open_Raw_Device_Uncached(device);
+    StreamHelper::on();
     smtpfs_raw_device_free(device);
-    if (!m_device)
+
+    if (!m_device) {
+        LIBMTP_Dump_Errorstack(m_device);
         return false;
+    }
 
     if (!enumStorages())
         return false;
@@ -142,8 +158,13 @@ bool MTPDevice::listDevices()
 {
     int raw_devices_cnt;
     LIBMTP_raw_device_t *raw_devices;
+
+    // Do not output LIBMTP debug stuff
+    StreamHelper::off();
     LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
         &raw_devices, &raw_devices_cnt);
+    StreamHelper::on();
+
     if (err != 0) {
         if (err == LIBMTP_ERROR_NO_DEVICE_ATTACHED)
             std::cerr << "No raw devices found.\n";
