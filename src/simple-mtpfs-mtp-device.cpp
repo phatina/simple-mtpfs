@@ -310,6 +310,8 @@ int MTPDevice::dirRemove(const std::string &path)
         logerr("No such directory '", path, "' to remove.\n");
         return -ENOENT;
     }
+    if (!dir_to_remove->isEmpty())
+        return -ENOTEMPTY;
     criticalEnter();
     int rval = LIBMTP_Delete_Object(m_device, dir_to_remove->id());
     criticalLeave();

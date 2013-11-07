@@ -52,6 +52,7 @@ public:
     const TypeFile *file(const std::string &name) const;
     std::set<TypeDir> dirs() const { return m_dirs; }
     std::set<TypeFile> files() const { return m_files; }
+    bool isEmpty() const { return m_dirs.empty() && m_files.empty(); }
 
     LIBMTP_folder_t *toLIBMTPFolder() const;
     TypeDir &operator =(const TypeDir &rhs);
