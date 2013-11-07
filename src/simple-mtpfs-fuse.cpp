@@ -431,8 +431,7 @@ int SMTPFileSystem::getattr(const char *path, struct stat *buf)
         std::string tmp_file(smtpfs_basename(path));
         const TypeDir *content = m_device.dirFetchContent(tmp_path);
         if (!content) {
-            errno = ENOENT;
-            return -1;
+            return -ENOENT;
         }
 
         if (content->dir(tmp_file)) {
@@ -451,8 +450,7 @@ int SMTPFileSystem::getattr(const char *path, struct stat *buf)
             buf->st_ctime = buf->st_mtime;
             buf->st_atime = buf->st_mtime;
         } else {
-            errno = ENOENT;
-            return -1;
+            return -ENOENT;
         }
     }
 
@@ -461,19 +459,17 @@ int SMTPFileSystem::getattr(const char *path, struct stat *buf)
 
 int SMTPFileSystem::mknod(const char *path, mode_t mode, dev_t dev)
 {
-    if (!S_ISREG(mode)) {
-        errno = EINVAL;
-        return -1;
-    }
+    if (!S_ISREG(mode))
+        return -EINVAL;
 
     std::string tmp_path = m_tmp_files_pool.makeTmpPath(std::string(path));
     int rval = ::open(tmp_path.c_str(), O_CREAT | O_WRONLY, mode);
     if (rval < 0)
-        return -1;
+        return -errno;
 
     rval = ::close(rval);
     if (rval < 0)
-        return -1;
+        return -errno;
 
     m_device.filePush(tmp_path, std::string(path));
     ::unlink(tmp_path.c_str());
@@ -502,29 +498,21 @@ int SMTPFileSystem::rename(const char *path, const char *newpath)
     if (tmp_old_dirname == tmp_new_dirname)
         return m_device.rename(std::string(path), std::string(newpath));
 
-    if (!m_options.m_enable_move) {
-        errno = EPERM;
-        return -1;
-    }
+    if (!m_options.m_enable_move)
+        return -EPERM;
 
     const std::string tmp_file = m_tmp_files_pool.makeTmpPath(std::string(newpath));
     int rval = m_device.filePull(std::string(path), tmp_file);
-    if (rval != 0) {
-        errno = rval;
-        return -1;
-    }
+    if (rval != 0)
+        return -rval;
 
     rval = m_device.filePush(tmp_file, std::string(newpath));
-    if (rval != 0) {
-        errno = rval;
-        return -1;
-    }
+    if (rval != 0)
+        return -rval;
 
     rval = m_device.fileRemove(std::string(path));
-    if (rval != 0) {
-        errno = rval;
-        return -1;
-    }
+    if (rval != 0)
+        return -rval;
 
     return 0;
 }
@@ -545,30 +533,27 @@ int SMTPFileSystem::truncate(const char *path, off_t new_size)
     int rval = m_device.filePull(std::string(path), tmp_path);
     if (rval != 0) {
         ::unlink(tmp_path.c_str());
-        errno = rval;
-        return -1;
+        return -rval;
     }
 
     rval = ::truncate(tmp_path.c_str(), new_size);
     if (rval != 0) {
+        int errno_tmp = errno;
         ::unlink(tmp_path.c_str());
-        return rval;
+        return -errno_tmp;
     }
 
     rval = m_device.fileRemove(std::string(path));
     if (rval != 0) {
         ::unlink(tmp_path.c_str());
-        errno = rval;
-        return -1;
+        return -rval;
     }
 
     rval = m_device.filePush(tmp_path, std::string(path));
     ::unlink(tmp_path.c_str());
 
-    if (rval != 0) {
-        errno = rval;
-        return -1;
-    }
+    if (rval != 0)
+        return -rval;
 
     return 0;
 }
@@ -579,16 +564,12 @@ int SMTPFileSystem::utime(const char *path, struct utimbuf *ubuf)
     std::string tmp_dirname(smtpfs_dirname(std::string(path)));
 
     const TypeDir *parent = m_device.dirFetchContent(tmp_dirname);
-    if (!parent) {
-        errno = ENOENT;
-        return -1;
-    }
+    if (!parent)
+        return -ENOENT;
 
     const TypeFile *file = parent->file(tmp_basename);
-    if (!file) {
-        errno = ENOENT;
-        return -1;
-    }
+    if (!file)
+        return -ENOENT;
 
     const_cast<TypeFile*>(file)->setModificationDate(ubuf->modtime);
 
@@ -601,7 +582,7 @@ int SMTPFileSystem::create(const char *path, mode_t mode, fuse_file_info *file_i
 
     int rval = ::creat(tmp_path.c_str(), mode);
     if (rval < 0)
-        return -1;
+        return -errno;
 
     file_info->fh = rval;
     m_tmp_files_pool.addFile(TypeTmpFile(std::string(path), tmp_path, rval, true));
@@ -617,14 +598,12 @@ int SMTPFileSystem::open(const char *path, struct fuse_file_info *file_info)
 
     std::string tmp_file = m_tmp_files_pool.makeTmpPath(std::string(path));
     int rval = m_device.filePull(std::string(path), tmp_file);
-    if (rval != 0) {
-        errno = rval;
-        return -1;
-    }
+    if (rval != 0)
+        return -rval;
 
     int fd = ::open(tmp_file.c_str(), file_info->flags);
     if (fd < 0)
-        return -1;
+        return -errno;
 
     file_info->fh = fd;
     m_tmp_files_pool.addFile(TypeTmpFile(std::string(path), tmp_file, fd));
@@ -637,7 +616,7 @@ int SMTPFileSystem::read(const char *path, char *buf, size_t size,
 {
     int rval = ::pread(file_info->fh, buf, size, offset);
     if (rval < 0)
-        return -1;
+        return -errno;
     return rval;
 }
 
@@ -645,14 +624,12 @@ int SMTPFileSystem::write(const char *path, const char *buf, size_t size,
     off_t offset, struct fuse_file_info *file_info)
 {
     const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(static_cast<int>(file_info->fh));
-    if (!tmp_file) {
-        errno = EINVAL;
-        return -1;
-    }
+    if (!tmp_file)
+        return -EINVAL;
 
     int rval = ::pwrite(file_info->fh, buf, size, offset);
     if (rval < 0)
-        return -1;
+        return -errno;
 
     const_cast<TypeTmpFile*>(tmp_file)->setModified();
     return rval;
@@ -662,7 +639,7 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
 {
     int rval = ::close(file_info->fh);
     if (rval < 0)
-        return -1;
+        return -errno;
 
     if (std::string(path) == std::string("-"))
         return 0;
@@ -672,11 +649,10 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
     const std::string tmp_path = tmp_file->pathTmp();
     m_tmp_files_pool.removeFile(tmp_file->fileDescriptor());
     if (modif) {
-        int push_rval = m_device.filePush(tmp_path, std::string(path));
-        if (push_rval != 0) {
+        int rval = m_device.filePush(tmp_path, std::string(path));
+        if (rval != 0) {
             ::unlink(tmp_path.c_str());
-            errno = push_rval;
-            return -1;
+            return -rval;
         }
     }
 
@@ -705,21 +681,24 @@ int SMTPFileSystem::flush(const char *path, struct fuse_file_info *file_info)
 int SMTPFileSystem::fsync(const char *path, int datasync,
     struct fuse_file_info *fi)
 {
+    int rval = -1;
 #ifdef HAVE_FDATASYNC
     if (datasync)
-        return ::fdatasync(fi->fh);
+        rval = ::fdatasync(fi->fh);
     else
+#else
+    rval = ::fsync(fi->fh);
 #endif
-    return ::fsync(fi->fh);
+    if (rval != 0)
+        return -errno;
+    return 0;
 }
 
 int SMTPFileSystem::opendir(const char *path, struct fuse_file_info *file_info)
 {
     const TypeDir *content = m_device.dirFetchContent(std::string(path));
-    if (!content) {
-        errno = ENOENT;
-        return -1;
-    }
+    if (!content)
+        return -ENOENT;
 
     return 0;
 }
@@ -728,10 +707,8 @@ int SMTPFileSystem::readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     off_t offset, struct fuse_file_info *file_info)
 {
     const TypeDir *content = m_device.dirFetchContent(std::string(path));
-    if (!content) {
-        errno = ENOENT;
-        return -1;
-    }
+    if (!content)
+        return -ENOENT;
 
     const std::set<TypeDir> dirs = content->dirs();
     const std::set<TypeFile> files = content->files();
@@ -771,14 +748,17 @@ int SMTPFileSystem::ftruncate(const char *path, off_t offset,
 {
     const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(file_info->fh);
     if (::ftruncate(file_info->fh, offset) != 0)
-        return -1;
+        return -errno;
     const_cast<TypeTmpFile*>(tmp_file)->setModified();
     return 0;
 }
 
 int SMTPFileSystem::fgetattr(const char *path, struct stat *buf, fuse_file_info *file_info)
 {
-    return ::fstat(file_info->fh, buf);
+    int rval = ::fstat(file_info->fh, buf);
+    if (rval != 0)
+        return -errno;
+    return 0;
 }
 
 bool SMTPFileSystem::removeDir(const std::string &dirname)
