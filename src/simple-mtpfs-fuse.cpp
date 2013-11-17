@@ -440,7 +440,7 @@ int SMTPFileSystem::getattr(const char *path, struct stat *buf)
             buf->st_size = file->size();
             buf->st_blocks = (file->size() / 512) + (file->size() % 512 > 0 ? 1 : 0);
             buf->st_nlink = 1;
-            buf->st_mode = S_IFREG | 0664;
+            buf->st_mode = S_IFREG | 0644;
             buf->st_mtime = file->modificationDate();
             buf->st_ctime = buf->st_mtime;
             buf->st_atime = buf->st_mtime;
@@ -720,7 +720,7 @@ int SMTPFileSystem::readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         struct stat st;
         memset(&st, 0, sizeof(st));
         st.st_ino = f.id();
-        st.st_mode = S_IFREG | 0664;
+        st.st_mode = S_IFREG | 0644;
         filler(buf, f.name().c_str(), &st, 0);
     }
 
