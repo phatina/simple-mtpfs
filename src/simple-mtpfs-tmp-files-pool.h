@@ -31,7 +31,7 @@ public:
 
     void setTmpDir(const std::string &path) { m_tmp_path = path; }
 
-    void addFile(const TypeTmpFile &tmp);
+    void addFile(const TypeTmpFile &tmp) { m_pool.insert(tmp); }
     void removeFile(int desc);
     bool empty() const { return m_pool.size(); }
     const TypeTmpFile *getFile(int desc) const;

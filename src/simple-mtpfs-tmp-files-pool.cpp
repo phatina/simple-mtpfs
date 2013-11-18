@@ -31,11 +31,6 @@ TmpFilesPool::~TmpFilesPool()
 {
 }
 
-void TmpFilesPool::addFile(const TypeTmpFile &tmp)
-{
-    m_pool.insert(tmp);
-}
-
 void TmpFilesPool::removeFile(int desc)
 {
     auto it = std::find(m_pool.begin(), m_pool.end(), desc);
