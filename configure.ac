@@ -52,3 +52,14 @@ AC_OUTPUT([
     src/makefile
     man/makefile
 ])
+
+AC_MSG_NOTICE([
+
+    simple-mtpfs $VERSION
+    ================
+
+    prefix: ${prefix}
+    tmpdir: ${tmpdir}
+
+    Now type 'make' to build $PACKAGE
+])
