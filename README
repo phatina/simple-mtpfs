@@ -40,5 +40,9 @@ To install the driver, follow these steps:
   make
   make install (as root)
 
+The project can be set to use custom directory for temporary files. To configure
+the simple-mtpfs to use desired temporary directory, add --with-tmpdir=TMPDIR
+option to configure script. Default value for temporary directory is "/tmp".
+
 If you got the sources from git repository, first you have to run:
   ./autogen.sh
