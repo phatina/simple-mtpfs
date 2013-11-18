@@ -782,7 +782,7 @@ bool SMTPFileSystem::createTmpDir()
     } else {
         c_tmp = getenv("TMPDIR");
         if (!c_tmp)
-            c_tmp = "/tmp";
+            c_tmp = TMPDIR;
         tmp_dir = smtpfs_realpath(c_tmp);
     }
 

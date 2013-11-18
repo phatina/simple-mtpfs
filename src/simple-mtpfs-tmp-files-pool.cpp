@@ -22,7 +22,7 @@
 #include "simple-mtpfs-sha1.h"
 
 TmpFilesPool::TmpFilesPool():
-    m_tmp_path("/tmp/simple-mtpfs"),
+    m_tmp_path(TMPDIR "/simple-mtpfs"),
     m_pool()
 {
 }
