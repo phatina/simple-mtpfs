@@ -15,7 +15,9 @@ m4_include([m4/cxx11.m4])
 AX_CXX_COMPILE_STDCXX_11([noext])
 AC_CHECK_LIB([mtp], [LIBMTP_Init], [], [AC_MSG_ERROR([libmtp not found])])
 AC_CHECK_HEADERS([libmtp.h])
-AC_CHECK_FUNCS([fdatasync])
+
+dnl Enable fdatasync, but not on OSX
+test `uname -s` == "Darwin" || AC_CHECK_FUNCS([fdatasync])
 
 PKG_CHECK_MODULES([FUSE], [fuse >= 2.7.3])
 AC_SUBST([FUSE_CFLAGS])
