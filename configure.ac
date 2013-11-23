@@ -17,7 +17,7 @@ AC_CHECK_LIB([mtp], [LIBMTP_Init], [], [AC_MSG_ERROR([libmtp not found])])
 AC_CHECK_HEADERS([libmtp.h])
 AC_CHECK_FUNCS([fdatasync])
 
-PKG_CHECK_MODULES([FUSE], [fuse >= 2.8])
+PKG_CHECK_MODULES([FUSE], [fuse >= 2.7.3])
 AC_SUBST([FUSE_CFLAGS])
 AC_SUBST([FUSE_LIBS])
 
