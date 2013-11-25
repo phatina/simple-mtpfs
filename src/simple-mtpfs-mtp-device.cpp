@@ -139,7 +139,7 @@ bool MTPDevice::connect(const std::string &dev_file)
     if (!enumStorages())
         return false;
 
-    logmsg("Connection.\n");
+    logmsg("Connected.\n");
     return true;
 }
 #endif
