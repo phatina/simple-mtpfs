@@ -47,7 +47,6 @@ private:
         int m_enable_move;
         int m_list_devices;
         int m_device_no;
-        char *m_tmp_dir;
 #ifdef HAVE_LIBUSB1
         char *m_device_file;
 #endif // HAVE_LIBUSB1

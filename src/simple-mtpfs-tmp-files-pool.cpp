@@ -20,9 +20,10 @@
 #include <sstream>
 #include "simple-mtpfs-tmp-files-pool.h"
 #include "simple-mtpfs-sha1.h"
+#include "simple-mtpfs-util.h"
 
 TmpFilesPool::TmpFilesPool():
-    m_tmp_path(TMPDIR "/simple-mtpfs"),
+    m_tmp_dir(smtpfs_get_tmpdir()),
     m_pool()
 {
 }
@@ -52,5 +53,18 @@ std::string TmpFilesPool::makeTmpPath(const std::string &path_device) const
     static int cnt = 0;
     std::stringstream ss;
     ss << path_device << ++cnt;
-    return m_tmp_path + std::string("/") + SHA1::sumString(ss.str());
+    return m_tmp_dir + std::string("/") + SHA1::sumString(ss.str());
+}
+
+bool TmpFilesPool::createTmpDir()
+{
+    removeTmpDir();
+    return smtpfs_create_dir(m_tmp_dir);
+}
+
+bool TmpFilesPool::removeTmpDir()
+{
+    if (!m_tmp_dir.empty())
+        return smtpfs_remove_dir(m_tmp_dir);
+    return false;
 }

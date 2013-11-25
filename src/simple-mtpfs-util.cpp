@@ -18,14 +18,16 @@
 #include <config.h>
 #include <cstring>
 #ifdef HAVE_LIBUSB1
-#  include <string>
 #  include <iomanip>
 #  include <sstream>
 #endif // HAVE_LIBUSB1
 extern "C" {
+#  include <dirent.h>
 #  include <libgen.h>
 #  include <limits.h>
+#  include <stdlib.h>
 #  include <sys/stat.h>
+#  include <sys/types.h>
 #  include <unistd.h>
 }
 #ifdef HAVE_LIBUSB1
@@ -101,6 +103,56 @@ std::string smtpfs_realpath(const std::string &path)
     char buf[PATH_MAX + 1];
     char *real_path = realpath(path.c_str(), buf);
     return std::string(real_path ? buf : "");
+}
+
+std::string smtpfs_get_tmpdir()
+{
+    const char *c_tmp = getenv("TMP");
+    std::string tmp_dir;
+    if (c_tmp) {
+        tmp_dir = smtpfs_realpath(c_tmp);
+    } else {
+        c_tmp = getenv("TMPDIR");
+        if (!c_tmp)
+            c_tmp = TMPDIR;
+        tmp_dir = smtpfs_realpath(c_tmp);
+    }
+
+    tmp_dir += "/simple-mtpfs-XXXXXX";
+    char *c_tmp_dir = ::mktemp(::strdup(tmp_dir.c_str()));
+
+    tmp_dir.assign(c_tmp_dir);
+    ::free(static_cast<void*>(c_tmp_dir));
+
+    return tmp_dir;
+}
+
+bool smtpfs_create_dir(const std::string &dirname)
+{
+    return ::mkdir(dirname.c_str(), S_IRWXU) == 0;
+}
+
+bool smtpfs_remove_dir(const std::string &dirname)
+{
+    DIR *dir;
+    struct dirent *entry;
+    std::string path;
+
+    dir = ::opendir(dirname.c_str());
+    if (!dir)
+        return false;
+
+    while ((entry = ::readdir(dir))) {
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            path = dirname + "/" + entry->d_name;
+            if (entry->d_type == DT_DIR)
+                return smtpfs_remove_dir(path);
+            ::unlink(path.c_str());
+        }
+    }
+    ::closedir(dir);
+    ::remove(dirname.c_str());
+    return true;
 }
 
 #ifdef HAVE_LIBUSB1

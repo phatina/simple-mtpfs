@@ -29,7 +29,7 @@ public:
     TmpFilesPool();
     ~TmpFilesPool();
 
-    void setTmpDir(const std::string &path) { m_tmp_path = path; }
+    void setTmpDir(const std::string &tmp_dir) { m_tmp_dir = tmp_dir; }
 
     void addFile(const TypeTmpFile &tmp) { m_pool.insert(tmp); }
     void removeFile(int desc);
@@ -37,9 +37,11 @@ public:
     const TypeTmpFile *getFile(int desc) const;
 
     std::string makeTmpPath(const std::string &path_device) const;
+    bool createTmpDir();
+    bool removeTmpDir();
 
 private:
-    std::string m_tmp_path;
+    std::string m_tmp_dir;
     std::set<TypeTmpFile> m_pool;
 };
 

@@ -18,16 +18,10 @@
 #include <config.h>
 #include <iostream>
 extern "C" {
-#  include <dirent.h>
 #  include <errno.h>
-#  include <fcntl.h>
 #  include <fuse/fuse_opt.h>
-#  include <libgen.h>
 #  include <unistd.h>
 #  include <stddef.h>
-#  include <stdlib.h>
-#  include <sys/stat.h>
-#  include <sys/types.h>
 }
 #include "simple-mtpfs-fuse.h"
 #include "simple-mtpfs-log.h"
@@ -167,7 +161,6 @@ SMTPFileSystem::SMTPFileSystemOptions::SMTPFileSystemOptions()
     , m_enable_move(false)
     , m_list_devices(false)
     , m_device_no(1)
-    , m_tmp_dir(nullptr)
 #ifdef HAVE_LIBUSB1
     , m_device_file(nullptr)
 #endif // HAVE_LIBUSB1
@@ -177,7 +170,6 @@ SMTPFileSystem::SMTPFileSystemOptions::SMTPFileSystemOptions()
 
 SMTPFileSystem::SMTPFileSystemOptions::~SMTPFileSystemOptions()
 {
-    free(static_cast<void*>(m_tmp_dir));
 #ifdef HAVE_LIBUSB1
     free(static_cast<void*>(m_device_file));
 #endif // HAVE_LIBUSB1
@@ -388,7 +380,7 @@ bool SMTPFileSystem::exec()
         return false;
     }
 
-    if (!createTmpDir()) {
+    if (!m_tmp_files_pool.createTmpDir()) {
         logerr("Can not create a temporary directory.\n");
         return false;
     }
@@ -415,7 +407,7 @@ bool SMTPFileSystem::exec()
     }
     m_device.disconnect();
 
-    removeTmpDir();
+    m_tmp_files_pool.removeTmpDir();
 
     return true;
 }
@@ -760,58 +752,4 @@ int SMTPFileSystem::ftruncate(const char *path, off_t offset,
         return -errno;
     const_cast<TypeTmpFile*>(tmp_file)->setModified();
     return 0;
-}
-
-bool SMTPFileSystem::removeDir(const std::string &dirname)
-{
-    DIR *dir;
-    struct dirent *entry;
-    std::string path;
-
-    dir = ::opendir(dirname.c_str());
-    if (!dir)
-        return false;
-
-    while ((entry = ::readdir(dir))) {
-        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-            path = dirname + "/" + entry->d_name;
-            if (entry->d_type == DT_DIR)
-                return removeDir(path);
-            ::unlink(path.c_str());
-        }
-    }
-    ::closedir(dir);
-    ::remove(dirname.c_str());
-    return true;
-}
-
-bool SMTPFileSystem::createTmpDir()
-{
-    removeTmpDir();
-
-    const char *c_tmp = getenv("TMP");
-    std::string tmp_dir;
-    if (c_tmp) {
-        tmp_dir = smtpfs_realpath(c_tmp);
-    } else {
-        c_tmp = getenv("TMPDIR");
-        if (!c_tmp)
-            c_tmp = TMPDIR;
-        tmp_dir = smtpfs_realpath(c_tmp);
-    }
-
-    tmp_dir += "/simple-mtpfs-XXXXXX";
-    m_options.m_tmp_dir = ::mktemp(::strdup(tmp_dir.c_str()));
-    m_tmp_files_pool.setTmpDir(m_options.m_tmp_dir);
-    if (::mkdir(static_cast<const char*>(m_options.m_tmp_dir), S_IRWXU) != 0)
-        return false;
-
-    return true;
-}
-
-bool SMTPFileSystem::removeTmpDir()
-{
-    if (m_options.m_tmp_dir)
-        return removeDir(std::string(m_options.m_tmp_dir));
-    return false;
 }
