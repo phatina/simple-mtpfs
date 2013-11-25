@@ -24,12 +24,13 @@
 #endif // HAVE_LIBUSB1
 extern "C" {
 #  include <libgen.h>
+#  include <limits.h>
 #  include <sys/stat.h>
+#  include <unistd.h>
 }
 #ifdef HAVE_LIBUSB1
 #  include <climits>
 extern "C" {
-#  include <unistd.h>
 #  include <libmtp.h>
 #  include <libusb.h>
 }
