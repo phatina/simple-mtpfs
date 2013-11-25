@@ -289,6 +289,7 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
     };
 
     if (argc < 2) {
+        logerr("Wrong usage.\n");
         m_options.m_good = false;
         return false;
     }
@@ -306,11 +307,13 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
     }
 
     if (--m_options.m_device_no < 0) {
+        logerr("Device number must be positive number greater than 0.\n");
         m_options.m_good = false;
         return false;
     }
 
     if (!m_options.m_mount_point) {
+        logerr("Mount point missing.\n");
         m_options.m_good = false;
         return false;
     }
@@ -380,27 +383,36 @@ bool SMTPFileSystem::exec()
     if (m_options.m_version || m_options.m_help)
         return true;
 
-    if (!smtpfs_check_dir(m_options.m_mount_point))
+    if (!smtpfs_check_dir(m_options.m_mount_point)) {
+        logerr("Can not mount the device to '", m_options.m_mount_point, "'.\n");
         return false;
+    }
 
-    if (!createTmpDir())
+    if (!createTmpDir()) {
+        logerr("Can not create a temporary directory.\n");
         return false;
+    }
 
 #ifdef HAVE_LIBUSB1
     if (m_options.m_device_file) {
         // Try to use device file first, if provided
-        if (!m_device.connect(m_options.m_device_file))
+        if (!m_device.connect(m_options.m_device_file)) {
+            logerr("Can not connect to device '", m_options.m_device_file, "'.\n");
             return false;
+        }
     } else
 #endif // HAVE_LIBUSB1
     {
         // Connect to MTP device by order number, if no device file supplied
-        if (!m_device.connect(m_options.m_device_no))
+        if (!m_device.connect(m_options.m_device_no)) {
+            logerr("Can not connect to device no. ", m_options.m_device_no, ".\n");
             return false;
+        }
     }
     m_device.enableMove(m_options.m_enable_move);
-    if (fuse_main(m_args.argc, m_args.argv, &m_fuse_operations, nullptr) > 0)
+    if (fuse_main(m_args.argc, m_args.argv, &m_fuse_operations, nullptr) > 0) {
         return false;
+    }
     m_device.disconnect();
 
     removeTmpDir();
