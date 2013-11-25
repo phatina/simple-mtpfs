@@ -310,10 +310,12 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         return false;
     }
 
-#ifdef HAVE_LIBUSB1
-    if (m_options.m_mount_point)
-        fuse_opt_add_arg(&m_args, m_options.m_mount_point);
-#endif // HAVE_LIBUSB1
+    if (!m_options.m_mount_point) {
+        m_options.m_good = false;
+        return false;
+    }
+
+    fuse_opt_add_arg(&m_args, m_options.m_mount_point);
     fuse_opt_add_arg(&m_args, "-s");
 
     if (m_options.m_verbose) {
