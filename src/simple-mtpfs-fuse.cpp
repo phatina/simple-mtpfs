@@ -597,17 +597,34 @@ int SMTPFileSystem::open(const char *path, struct fuse_file_info *file_info)
     if (file_info->flags & O_WRONLY)
         file_info->flags |= O_TRUNC;
 
-    std::string tmp_file = m_tmp_files_pool.makeTmpPath(std::string(path));
-    int rval = m_device.filePull(std::string(path), tmp_file);
-    if (rval != 0)
-        return -rval;
+    const std::string std_path(path);
 
-    int fd = ::open(tmp_file.c_str(), file_info->flags);
-    if (fd < 0)
+    TypeTmpFile *tmp_file = const_cast<TypeTmpFile*>(
+        m_tmp_files_pool.getFile(std_path));
+
+    std::string tmp_path;
+    if (tmp_file) {
+        tmp_path = tmp_file->pathTmp();
+    } else {
+        tmp_path = m_tmp_files_pool.makeTmpPath(std_path);
+
+        int rval = m_device.filePull(std_path, tmp_path);
+        if (rval != 0)
+            return -rval;
+    }
+
+    int fd = ::open(tmp_path.c_str(), file_info->flags);
+    if (fd < 0) {
+        ::unlink(tmp_path.c_str());
         return -errno;
+    }
 
     file_info->fh = fd;
-    m_tmp_files_pool.addFile(TypeTmpFile(std::string(path), tmp_file, fd));
+
+    if (tmp_file)
+        tmp_file->addFileDescriptor(fd);
+    else
+        m_tmp_files_pool.addFile(TypeTmpFile(std_path, tmp_path, fd));
 
     return 0;
 }
@@ -624,7 +641,7 @@ int SMTPFileSystem::read(const char *path, char *buf, size_t size,
 int SMTPFileSystem::write(const char *path, const char *buf, size_t size,
     off_t offset, struct fuse_file_info *file_info)
 {
-    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(static_cast<int>(file_info->fh));
+    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(std::string(path));
     if (!tmp_file)
         return -EINVAL;
 
@@ -642,15 +659,21 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
     if (rval < 0)
         return -errno;
 
-    if (std::string(path) == std::string("-"))
+    const std::string std_path(path);
+    if (std_path == std::string("-"))
         return 0;
 
-    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(static_cast<int>(file_info->fh));
+    TypeTmpFile *tmp_file = const_cast<TypeTmpFile*>(
+        m_tmp_files_pool.getFile(std_path));
+    tmp_file->removeFileDescriptor(file_info->fh);
+    if (tmp_file->refcnt() != 0)
+        return 0;
+
     const bool modif = tmp_file->isModified();
     const std::string tmp_path = tmp_file->pathTmp();
-    m_tmp_files_pool.removeFile(tmp_file->fileDescriptor());
+    m_tmp_files_pool.removeFile(std_path);
     if (modif) {
-        int rval = m_device.filePush(tmp_path, std::string(path));
+        rval = m_device.filePush(tmp_path, std_path);
         if (rval != 0) {
             ::unlink(tmp_path.c_str());
             return -rval;
@@ -747,7 +770,7 @@ int SMTPFileSystem::fsyncdir(const char *path, int datasync,
 int SMTPFileSystem::ftruncate(const char *path, off_t offset,
     struct fuse_file_info *file_info)
 {
-    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(file_info->fh);
+    const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(std::string(path));
     if (::ftruncate(file_info->fh, offset) != 0)
         return -errno;
     const_cast<TypeTmpFile*>(tmp_file)->setModified();

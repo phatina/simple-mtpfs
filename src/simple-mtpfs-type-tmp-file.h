@@ -18,6 +18,7 @@
 #ifndef SMTPFS_TYPE_TMP_FILE_H
 #define SMTPFS_TYPE_TMP_FILE_H
 
+#include <set>
 #include <string>
 #include "simple-mtpfs-type-file.h"
 #include "simple-mtpfs-log.h"
@@ -30,36 +31,41 @@ public:
     TypeTmpFile(const std::string &path_device, const std::string &path_tmp,
         int file_desc, bool modified = false);
 
-    const std::string pathDevice() const { return m_path_device; }
-    const std::string pathTmp() const { return m_path_tmp; }
-    int fileDescriptor() const { return m_file_desc; }
-    bool isModified() const { return m_modified; }
+    std::string pathDevice() const { return m_path_device; }
+    std::string pathTmp() const { return m_path_tmp; }
 
+    bool isModified() const { return m_modified; }
     void setModified(bool modified = true) { m_modified = modified; }
 
+    std::set<int> fileDescriptors() const { return m_file_descriptors; }
+    void addFileDescriptor(int fd) { m_file_descriptors.insert(fd); }
+    bool hasFileDescriptor(int fd);
+    void removeFileDescriptor(int fd);
+    int refcnt() const { return m_file_descriptors.size(); }
+
     TypeTmpFile &operator =(const TypeTmpFile &rhs);
+
     bool operator ==(const TypeTmpFile &rhs) const
     {
-        return m_file_desc == rhs.m_file_desc;
+        return m_path_device == rhs.m_path_device;
     }
-    bool operator ==(int desc) const
+    bool operator ==(const std::string &path) const
     {
-        return m_file_desc == desc;
+        return m_path_device == path;
     }
     bool operator <(const TypeTmpFile &rhs) const
     {
-        return m_file_desc < rhs.m_file_desc;
+        return m_path_device < rhs.m_path_device;
     }
-    bool operator <(int desc) const
+    bool operator <(const std::string &path) const
     {
-        return m_file_desc < desc;
+        return m_path_device < path;
     }
-
 
 private:
     std::string m_path_device;
     std::string m_path_tmp;
-    int m_file_desc;
+    std::set<int> m_file_descriptors;
     bool m_modified;
 };
 

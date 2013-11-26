@@ -32,17 +32,17 @@ TmpFilesPool::~TmpFilesPool()
 {
 }
 
-void TmpFilesPool::removeFile(int desc)
+void TmpFilesPool::removeFile(const std::string &path)
 {
-    auto it = std::find(m_pool.begin(), m_pool.end(), desc);
+    auto it = std::find(m_pool.begin(), m_pool.end(), path);
     if (it == m_pool.end())
         return;
     m_pool.erase(it);
 }
 
-const TypeTmpFile *TmpFilesPool::getFile(int desc) const
+const TypeTmpFile *TmpFilesPool::getFile(const std::string &path) const
 {
-    auto it = std::find(m_pool.begin(), m_pool.end(), desc);
+    auto it = std::find(m_pool.begin(), m_pool.end(), path);
     if (it == m_pool.end())
         return nullptr;
     return static_cast<const TypeTmpFile*>(&*it);

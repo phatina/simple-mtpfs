@@ -16,39 +16,56 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <config.h>
+#include <algorithm>
 #include "simple-mtpfs-type-tmp-file.h"
 
 TypeTmpFile::TypeTmpFile():
     m_path_device(),
     m_path_tmp(),
-    m_file_desc(0),
+    m_file_descriptors(),
     m_modified(false)
 {
 }
 
 TypeTmpFile::TypeTmpFile(const std::string &path_device,
-    const std::string &path_tmp, int file_desc,
-    bool modified):
+        const std::string &path_tmp, int file_desc,
+        bool modified):
     m_path_device(path_device),
     m_path_tmp(path_tmp),
-    m_file_desc(file_desc),
     m_modified(modified)
 {
+    m_file_descriptors.insert(file_desc);
 }
 
 TypeTmpFile::TypeTmpFile(const TypeTmpFile &copy):
     m_path_device(copy.m_path_device),
     m_path_tmp(copy.m_path_tmp),
-    m_file_desc(copy.m_file_desc),
+    m_file_descriptors(copy.m_file_descriptors),
     m_modified(copy.m_modified)
 {
+}
+
+bool TypeTmpFile::hasFileDescriptor(int fd)
+{
+    auto it = std::find(m_file_descriptors.begin(),
+        m_file_descriptors.end(), fd);
+    return it != m_file_descriptors.end();
+}
+
+void TypeTmpFile::removeFileDescriptor(int fd)
+{
+    auto it = std::find(m_file_descriptors.begin(),
+        m_file_descriptors.end(), fd);
+    if (it == m_file_descriptors.end())
+        return;
+    m_file_descriptors.erase(it);
 }
 
 TypeTmpFile &TypeTmpFile::operator =(const TypeTmpFile &rhs)
 {
     m_path_device = rhs.m_path_device;
     m_path_tmp = rhs.m_path_tmp;
-    m_file_desc = rhs.m_file_desc;
+    m_file_descriptors = rhs.m_file_descriptors;
     m_modified = rhs.m_modified;
     return *this;
 }

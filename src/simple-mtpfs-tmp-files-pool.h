@@ -32,9 +32,10 @@ public:
     void setTmpDir(const std::string &tmp_dir) { m_tmp_dir = tmp_dir; }
 
     void addFile(const TypeTmpFile &tmp) { m_pool.insert(tmp); }
-    void removeFile(int desc);
+    void removeFile(const std::string &path);
     bool empty() const { return m_pool.size(); }
-    const TypeTmpFile *getFile(int desc) const;
+
+    const TypeTmpFile *getFile(const std::string &path) const;
 
     std::string makeTmpPath(const std::string &path_device) const;
     bool createTmpDir();
