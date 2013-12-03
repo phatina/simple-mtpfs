@@ -331,7 +331,7 @@ void SMTPFileSystem::printHelp() const
     struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
     struct fuse_operations tmp_operations;
     memset(&tmp_operations, 0, sizeof(tmp_operations));
-    std::cerr << "usage: " << m_args.argv[0]
+    std::cerr << "usage: " << smtpfs_basename(m_args.argv[0])
 #ifdef HAVE_LIBUSB1
               << " <source>"
 #endif // HAVE_LIBUSB1
