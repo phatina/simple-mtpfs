@@ -298,12 +298,6 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         return true;
     }
 
-    if (--m_options.m_device_no < 0) {
-        logerr("Device number must be positive number greater than 0.\n");
-        m_options.m_good = false;
-        return false;
-    }
-
     if (!m_options.m_mount_point) {
         logerr("Mount point missing.\n");
         m_options.m_good = false;
@@ -317,6 +311,8 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         Logger::setGlobalVerbose();
         fuse_opt_add_arg(&m_args, "-f");
     }
+
+    --m_options.m_device_no;
 
 #ifdef HAVE_LIBUSB1
     // device file and -- device are mutually exclusive, fail if both set
@@ -388,18 +384,14 @@ bool SMTPFileSystem::exec()
 #ifdef HAVE_LIBUSB1
     if (m_options.m_device_file) {
         // Try to use device file first, if provided
-        if (!m_device.connect(m_options.m_device_file)) {
-            logerr("Can not connect to device '", m_options.m_device_file, "'.\n");
+        if (!m_device.connect(m_options.m_device_file))
             return false;
-        }
     } else
 #endif // HAVE_LIBUSB1
     {
         // Connect to MTP device by order number, if no device file supplied
-        if (!m_device.connect(m_options.m_device_no)) {
-            logerr("Can not connect to device no. ", m_options.m_device_no, ".\n");
+        if (!m_device.connect(m_options.m_device_no))
             return false;
-        }
     }
     m_device.enableMove(m_options.m_enable_move);
     if (fuse_main(m_args.argc, m_args.argv, &m_fuse_operations, nullptr) > 0) {

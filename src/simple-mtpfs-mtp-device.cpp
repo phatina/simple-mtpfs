@@ -63,9 +63,10 @@ bool MTPDevice::connect(int dev_no)
     StreamHelper::off();
     LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
         &raw_devices, &raw_devices_cnt);
-    StreamHelper::off();
+    StreamHelper::on();
 
-    if (dev_no > raw_devices_cnt) {
+    if (dev_no < 0 || dev_no >= raw_devices_cnt) {
+        logerr("Can not connect to device no. ", dev_no + 1, ".\n");
         free(static_cast<void*>(raw_devices));
         return false;
     }
@@ -121,7 +122,7 @@ bool MTPDevice::connect(const std::string &dev_file)
 
     LIBMTP_raw_device_t *device = smtpfs_raw_device_new(dev_file);
     if (!device) {
-        logerr("Could not open such device '", dev_file, ".\n");
+        logerr("Can not open such device '", dev_file, "'.\n");
         return false;
     }
 
