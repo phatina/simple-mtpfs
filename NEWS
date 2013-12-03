@@ -1,0 +1,13 @@
+New in version 0.2:
+- introduced special device file as mount parameter
+  - MTP device can be specified by special file placed in /dev
+- fixed bogus storage size reported on FreeBSD
+- temporary directory can be configured during setup time (--with-tmpdir=)
+- temporary directory can be overridden by environment variables TMP, TMPDIR
+- build fixes
+  - on older C++ compilers
+  - Mac OS X (fuse)
+  - FreeBSD
+- libmtp debug messages are suppressed
+- reference counting for opened temporary files
+- various fixes, improvements and code cleanup

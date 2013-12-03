@@ -1,9 +1,9 @@
 AC_PREREQ([2.60])
-AC_INIT([simple-mtpfs], [0.1], [phatina@gmail.com])
+AC_INIT([simple-mtpfs], [0.2], [phatina@gmail.com])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE([dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AC_CONFIG_HEADERS(config.h)
 AM_SILENT_RULES([yes])
 
