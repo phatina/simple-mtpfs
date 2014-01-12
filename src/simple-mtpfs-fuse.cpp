@@ -341,6 +341,7 @@ void SMTPFileSystem::printHelp() const
         << "    -h   --help            print help\n"
         << "    -V   --version         print version\n\n"
         << "simple-mtpfs options:\n"
+        << "    -v   --verbose         verbose output, implies -f\n"
         << "    -l   --list-devices    print available devices\n"
         << "         --device          select a device number to mount\n"
         << "    -o enable-move         enable the move operations\n\n";
