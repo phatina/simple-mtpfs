@@ -202,6 +202,8 @@ bool MTPDevice::enumStorages()
     criticalEnter();
     LIBMTP_Clear_Errorstack(m_device);
     if (LIBMTP_Get_Storage(m_device, LIBMTP_STORAGE_SORTBY_NOTSORTED) < 0) {
+        std::cerr << "Could not retrieve device storage.\n";
+        std::cerr << "For android phones make sure the screen is unlocked.\n";
         logerr("Could not retrieve device storage. Exiting.\n");
         LIBMTP_Dump_Errorstack(m_device);
         LIBMTP_Clear_Errorstack(m_device);
