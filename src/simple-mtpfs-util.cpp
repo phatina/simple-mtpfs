@@ -189,16 +189,14 @@ LIBMTP_raw_device_t *smtpfs_raw_device_new_priv(libusb_device *usb_device)
 
 LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path)
 {
-    libusb_context *ctx;
-    int err = libusb_init(&ctx);
-    if (err)
+    if (libusb_init(NULL) != 0)
         return nullptr;
 
     std::string dev_path(smtpfs_realpath(path));
     libusb_device **dev_list;
-    ssize_t num_devs = libusb_get_device_list(ctx, &dev_list);
-    if (num_devs < 1) {
-        libusb_exit(ctx);
+    ssize_t num_devs = libusb_get_device_list(NULL, &dev_list);
+    if (!num_devs) {
+        libusb_exit(NULL);
         return nullptr;
     }
 
@@ -223,7 +221,7 @@ LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path)
     LIBMTP_raw_device_t *raw_device = smtpfs_raw_device_new_priv(dev);
 
     libusb_free_device_list(dev_list, 0);
-    libusb_exit(ctx);
+    libusb_exit(NULL);
 
     return raw_device;
 }
