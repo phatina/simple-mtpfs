@@ -37,6 +37,7 @@ extern "C" {
 #  include <libusb.h>
 }
 #endif // HAVE_LIBUSB1
+#include "simple-mtpfs-log.h"
 #include "simple-mtpfs-util.h"
 
 const std::string devnull = "/dev/null";
@@ -225,6 +226,39 @@ LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path)
     libusb_exit(ctx);
 
     return raw_device;
+}
+
+bool smtpfs_reset_device(LIBMTP_raw_device_t *device)
+{
+    if (libusb_init(NULL) != 0)
+        return false;
+
+    libusb_device **dev_list;
+    ssize_t num_devs = libusb_get_device_list(NULL, &dev_list);
+    if (!num_devs) {
+        libusb_exit(NULL);
+        return false;
+    }
+
+    libusb_device_handle *dev_handle = nullptr;
+    for (auto i = 0; i < num_devs; ++i) {
+        uint8_t bnum = libusb_get_bus_number(dev_list[i]);
+        uint8_t dnum = libusb_get_device_address(dev_list[i]);
+
+        if (static_cast<uint32_t>(bnum) == device->bus_location &&
+            dnum == device->devnum)
+        {
+            libusb_open(dev_list[i], &dev_handle);
+            libusb_reset_device(dev_handle);
+            libusb_close(dev_handle);
+            break;
+        }
+    }
+
+    libusb_free_device_list(dev_list, 0);
+    libusb_exit(NULL);
+
+    return true;
 }
 
 void smtpfs_raw_device_free(LIBMTP_raw_device_t *device)

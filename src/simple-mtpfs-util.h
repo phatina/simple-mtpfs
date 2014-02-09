@@ -51,6 +51,7 @@ bool smtpfs_check_dir(const std::string &path);
 #ifdef HAVE_LIBUSB1
 LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path);
 void smtpfs_raw_device_free(LIBMTP_raw_device_t *device);
+bool smtpfs_reset_device(LIBMTP_raw_device_t *device);
 #endif // HAVE_LIBUSB1
 
 #endif // SIMPLE_MTPFS_UTIL

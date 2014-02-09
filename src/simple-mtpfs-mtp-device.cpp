@@ -94,9 +94,18 @@ bool MTPDevice::connect(int dev_no)
         return false;
     }
 
+    LIBMTP_raw_device_t *raw_device = &raw_devices[dev_no];
+
+#ifdef HAVE_LIBUSB1
+    // Try to reset USB device, so we don't wait until LIBMTP times out.
+    // We do this every time we are about to mount a device, but better
+    // connect on first try, than wait for 60s timeout.
+    smtpfs_reset_device(raw_device);
+#endif // HAVE_LIBUSB1
+
     // Do not output LIBMTP debug stuff
     StreamHelper::off();
-    m_device = LIBMTP_Open_Raw_Device_Uncached(&raw_devices[dev_no]);
+    m_device = LIBMTP_Open_Raw_Device_Uncached(raw_device);
     StreamHelper::on();
     free(static_cast<void*>(raw_devices));
 
@@ -120,17 +129,24 @@ bool MTPDevice::connect(const std::string &dev_file)
         return true;
     }
 
-    LIBMTP_raw_device_t *device = smtpfs_raw_device_new(dev_file);
-    if (!device) {
+    LIBMTP_raw_device_t *raw_device = smtpfs_raw_device_new(dev_file);
+    if (!raw_device) {
         logerr("Can not open such device '", dev_file, "'.\n");
         return false;
     }
 
+#ifdef HAVE_LIBUSB1
+    // Try to reset USB device, so we don't wait until LIBMTP times out.
+    // We do this every time we are about to mount a device, but better
+    // connect on first try, than wait for 60s timeout.
+    smtpfs_reset_device(raw_device);
+#endif // HAVE_LIBUSB1
+
     // Do not output LIBMTP debug stuff
     StreamHelper::off();
-    m_device = LIBMTP_Open_Raw_Device_Uncached(device);
+    m_device = LIBMTP_Open_Raw_Device_Uncached(raw_device);
     StreamHelper::on();
-    smtpfs_raw_device_free(device);
+    smtpfs_raw_device_free(raw_device);
 
     if (!m_device) {
         LIBMTP_Dump_Errorstack(m_device);
