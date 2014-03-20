@@ -189,8 +189,10 @@ bool MTPDevice::listDevices()
     }
 
     for (int i = 0; i < raw_devices_cnt; ++i) {
-        std::cout << i + 1 << ": " << raw_devices[i].device_entry.vendor
-            << raw_devices[i].device_entry.product << "\n";
+        std::cout << i + 1 << ": " 
+            << (raw_devices[i].device_entry.vendor?raw_devices[i].device_entry.vendor:"Unknown vendor ")
+            << (raw_devices[i].device_entry.product?raw_devices[i].device_entry.product:"Unknown product") 
+            << "\n";
     }
     free(static_cast<void*>(raw_devices));
 
