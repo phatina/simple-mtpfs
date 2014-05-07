@@ -2,7 +2,7 @@ simple-mtpfs (0.2-1) unstable; urgency=low
 
   * Upgrade to v0.2
 
- -- Peter Hatina <phatina@gmail.com> Tue, 03 Dec 2013 21:51:20 +0100
+ -- Peter Hatina <phatina@gmail.com>  Tue, 03 Dec 2013 21:51:20 +0100
 
 simple-mtpfs (0.1-1) precise; urgency=low
 
