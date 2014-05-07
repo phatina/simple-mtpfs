@@ -9,7 +9,7 @@ Vcs-Browser: https://github.com/phatina/simple-mtpfs
 
 Package: simple-mtpfs
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, fuse-utils
+Depends: ${shlibs:Depends}, ${misc:Depends}, fuse
 Provides: mtpfs
 Conflicts: mtpfs
 Description: Simple MTP fuse filesystem driver
