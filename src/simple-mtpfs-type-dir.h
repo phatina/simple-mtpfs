@@ -54,6 +54,9 @@ public:
     std::set<TypeFile> files() const { return m_files; }
     bool isEmpty() const { return m_dirs.empty() && m_files.empty(); }
 
+	time_t modificationDate() const { return m_modif_date; }
+    void setModificationDate(time_t modif_date) { m_modif_date = modif_date; }
+	
     LIBMTP_folder_t *toLIBMTPFolder() const;
     TypeDir &operator =(const TypeDir &rhs);
     bool operator ==(const std::string &rhs) const { return TypeBasic::operator ==(rhs); }
@@ -66,6 +69,7 @@ private:
     std::set<TypeFile> m_files;
     mutable std::mutex m_access_mutex;
     bool m_fetched;
+    time_t m_modif_date;
 };
 
 #endif // SMTPFS_TYPE_DIR_H
