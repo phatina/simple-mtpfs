@@ -433,6 +433,7 @@ int SMTPFileSystem::getattr(const char *path, struct stat *buf)
             buf->st_ino = dir->id();
             buf->st_mode = S_IFDIR | 0775;
             buf->st_nlink = 2;
+            buf->st_mtime = dir->modificationDate();
         } else if (content->file(tmp_file)) {
             const TypeFile *file = content->file(tmp_file);
             buf->st_ino = file->id();

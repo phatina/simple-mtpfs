@@ -29,7 +29,8 @@ TypeDir::TypeDir():
     m_dirs(),
     m_files(),
     m_access_mutex(),
-    m_fetched(false)
+    m_fetched(false),
+    m_modif_date(0)
 {
 }
 
@@ -39,7 +40,8 @@ TypeDir::TypeDir(uint32_t id, uint32_t parent_id, uint32_t storage_id,
     m_dirs(),
     m_files(),
     m_access_mutex(),
-    m_fetched(false)
+    m_fetched(false),
+    m_modif_date(0)
 {
 }
 
@@ -49,7 +51,8 @@ TypeDir::TypeDir(LIBMTP_file_t *file):
     m_dirs(),
     m_files(),
     m_access_mutex(),
-    m_fetched(false)
+    m_fetched(false),
+    m_modif_date(file->modificationdate)
 {
 }
 
@@ -58,7 +61,8 @@ TypeDir::TypeDir(const TypeDir &copy):
     m_dirs(copy.m_dirs),
     m_files(copy.m_files),
     m_access_mutex(),
-    m_fetched(copy.m_fetched)
+    m_fetched(copy.m_fetched),
+    m_modif_date(copy.m_modif_date)
 {
 }
 
