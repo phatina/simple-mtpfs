@@ -57,10 +57,10 @@ public:
     int fileRemove(const std::string &path);
     int fileRename(const std::string &oldpath, const std::string &newpath);
 
+private:
     void criticalEnter() { m_device_mutex.lock(); }
     void criticalLeave() { m_device_mutex.unlock(); }
 
-private:
     bool enumStorages();
 
 private:
