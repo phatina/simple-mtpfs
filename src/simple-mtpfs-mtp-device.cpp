@@ -41,7 +41,9 @@ MTPDevice::MTPDevice():
     m_root_dir(),
     m_move_enabled(false)
 {
+    StreamHelper::off();
     LIBMTP_Init();
+    StreamHelper::on();
 }
 
 MTPDevice::~MTPDevice()
