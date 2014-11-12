@@ -32,14 +32,40 @@ extern "C" {
 class MTPDevice
 {
 public:
+    class Capabilities
+    {
+    public:
+        Capabilities()
+            : m_get_partial_object(false)
+            , m_send_partial_object(false)
+            , m_edit_objects(false)
+        {
+        }
+
+        void setCanGetPartialObject(bool b) { m_get_partial_object = b; }
+        void setCanSendPartialobject(bool b) { m_send_partial_object = b; }
+        void setCanEditObjects(bool b) { m_edit_objects = b; }
+
+        bool canGetPartialObject()  const { return m_get_partial_object; }
+        bool canSendPartialObject() const { return m_send_partial_object; }
+        bool canEditObjects() const { return m_edit_objects; }
+
+    private:
+        bool m_get_partial_object;
+        bool m_send_partial_object;
+        bool m_edit_objects;
+    };
+
+    // -------------------------------------------------------------------------
+
     MTPDevice();
     ~MTPDevice();
 
+    bool connect(LIBMTP_raw_device_t *dev);
     bool connect(int dev_no = 0);
     bool connect(const std::string &dev_file);
     void disconnect();
 
-    bool listDevices();
     void enableMove(bool e = true) { m_move_enabled = e; }
 
     uint64_t storageTotalSize() const;
@@ -57,14 +83,21 @@ public:
     int fileRemove(const std::string &path);
     int fileRename(const std::string &oldpath, const std::string &newpath);
 
+    Capabilities getCapabilities() const;
+
+    static bool listDevices(bool verbose = false);
+
 private:
     void criticalEnter() { m_device_mutex.lock(); }
     void criticalLeave() { m_device_mutex.unlock(); }
 
     bool enumStorages();
 
+    static Capabilities getCapabilities(const MTPDevice &device);
+
 private:
     LIBMTP_mtpdevice_t *m_device;
+    Capabilities m_capabilities;
     std::mutex m_device_mutex;
     TypeDir m_root_dir;
     bool m_move_enabled;

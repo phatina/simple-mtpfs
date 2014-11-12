@@ -34,12 +34,6 @@ class SMTPFileSystem
 private:
     struct SMTPFileSystemOptions {
     public:
-        enum { KEY_VERSION,
-               KEY_HELP,
-               KEY_LIST_DEVICES,
-               KEY_DEVICE,
-               KEY_ENABLE_MOVE};
-
         int m_good;
         int m_help;
         int m_version;
@@ -78,7 +72,7 @@ public:
     bool parseOptions(int argc, char **argv);
     void printHelp() const;
     void printVersion() const;
-    bool listDevices() { return m_device.listDevices(); }
+    bool listDevices() const;
 
     bool exec();
     bool isGood() const { return m_options.m_good; }

@@ -37,6 +37,7 @@ uint32_t MTPDevice::s_root_node = ~0;
 
 MTPDevice::MTPDevice():
     m_device(nullptr),
+    m_capabilities(),
     m_device_mutex(),
     m_root_dir(),
     m_move_enabled(false)
@@ -49,6 +50,33 @@ MTPDevice::MTPDevice():
 MTPDevice::~MTPDevice()
 {
     disconnect();
+}
+
+bool MTPDevice::connect(LIBMTP_raw_device_t *dev)
+{
+    if (m_device) {
+        logerr("Already connected.\n");
+        return true;
+    }
+
+    // Do not output LIBMTP debug stuff
+    StreamHelper::off();
+    m_device = LIBMTP_Open_Raw_Device_Uncached(dev);
+    StreamHelper::on();
+
+    if (!m_device) {
+        LIBMTP_Dump_Errorstack(m_device);
+        return false;
+    }
+
+    if (!enumStorages())
+        return false;
+
+    // Retrieve capabilities.
+    m_capabilities = MTPDevice::getCapabilities(*this);
+
+    logmsg("Connected.\n");
+    return true;
 }
 
 bool MTPDevice::connect(int dev_no)
@@ -119,6 +147,9 @@ bool MTPDevice::connect(int dev_no)
     if (!enumStorages())
         return false;
 
+    // Retrieve capabilities.
+    m_capabilities = MTPDevice::getCapabilities(*this);
+
     logmsg("Connected.\n");
     return true;
 }
@@ -144,22 +175,12 @@ bool MTPDevice::connect(const std::string &dev_file)
     smtpfs_reset_device(raw_device);
 #endif // HAVE_LIBUSB1
 
-    // Do not output LIBMTP debug stuff
-    StreamHelper::off();
-    m_device = LIBMTP_Open_Raw_Device_Uncached(raw_device);
-    StreamHelper::on();
+    bool rval = connect(raw_device);
+
+    // TODO:  Smart pointer with alloc, free hooks.
     smtpfs_raw_device_free(raw_device);
 
-    if (!m_device) {
-        LIBMTP_Dump_Errorstack(m_device);
-        return false;
-    }
-
-    if (!enumStorages())
-        return false;
-
-    logmsg("Connected.\n");
-    return true;
+    return rval;
 }
 #endif
 
@@ -171,34 +192,6 @@ void MTPDevice::disconnect()
     LIBMTP_Release_Device(m_device);
     m_device = nullptr;
     logmsg("Disconnected.\n");
-}
-
-bool MTPDevice::listDevices()
-{
-    int raw_devices_cnt;
-    LIBMTP_raw_device_t *raw_devices;
-
-    // Do not output LIBMTP debug stuff
-    StreamHelper::off();
-    LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
-        &raw_devices, &raw_devices_cnt);
-    StreamHelper::on();
-
-    if (err != 0) {
-        if (err == LIBMTP_ERROR_NO_DEVICE_ATTACHED)
-            std::cerr << "No raw devices found.\n";
-        return false;
-    }
-
-    for (int i = 0; i < raw_devices_cnt; ++i) {
-        std::cout << i + 1 << ": "
-            << (raw_devices[i].device_entry.vendor ? raw_devices[i].device_entry.vendor : "Unknown vendor ")
-            << (raw_devices[i].device_entry.product ? raw_devices[i].device_entry.product : "Unknown product")
-            << "\n";
-    }
-    free(static_cast<void*>(raw_devices));
-
-    return true;
 }
 
 uint64_t MTPDevice::storageTotalSize() const
@@ -590,4 +583,77 @@ int MTPDevice::fileRename(const std::string &oldpath, const std::string &newpath
     const_cast<TypeFile*>(file_to_rename)->setName(tmp_new_basename);
     logmsg("File '", oldpath, "' renamed to '", tmp_new_basename, "'.\n");
     return 0;
+}
+
+MTPDevice::Capabilities MTPDevice::getCapabilities() const
+{
+    return m_capabilities;
+}
+
+MTPDevice::Capabilities MTPDevice::getCapabilities(const MTPDevice &device)
+{
+    MTPDevice::Capabilities capabilities;
+
+#ifdef HAVE_LIBMTP_CHECK_CAPABILITY
+    if (device.m_device) {
+        capabilities.setCanGetPartialObject(
+            static_cast<bool>(
+                LIBMTP_Check_Capability(
+                    device.m_device,
+                    LIBMTP_DEVICECAP_GetPartialObject)));
+        capabilities.setCanSendPartialobject(
+            static_cast<bool>(
+                LIBMTP_Check_Capability(
+                    device.m_device,
+                    LIBMTP_DEVICECAP_SendPartialObject)));
+        capabilities.setCanEditObjects(
+            static_cast<bool>(
+                LIBMTP_Check_Capability(
+                    device.m_device,
+                    LIBMTP_DEVICECAP_EditObjects)));
+    }
+#endif
+
+    return capabilities;
+}
+
+bool MTPDevice::listDevices(bool verbose)
+{
+    int raw_devices_cnt;
+    LIBMTP_raw_device_t *raw_devices;
+
+    // Do not output LIBMTP debug stuff
+    StreamHelper::off();
+    LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
+        &raw_devices, &raw_devices_cnt);
+    StreamHelper::on();
+
+    if (err != 0) {
+        if (err == LIBMTP_ERROR_NO_DEVICE_ATTACHED)
+            std::cerr << "No raw devices found.\n";
+        return false;
+    }
+
+    for (int i = 0; i < raw_devices_cnt; ++i) {
+        std::cout << i + 1 << ": "
+            << (raw_devices[i].device_entry.vendor ? raw_devices[i].device_entry.vendor : "Unknown vendor ")
+            << (raw_devices[i].device_entry.product ? raw_devices[i].device_entry.product : "Unknown product")
+            << std::endl;
+#ifdef HAVE_LIBMTP_CHECK_CAPABILITY
+            MTPDevice dev;
+            if (verbose) {
+                if (!dev.connect(&raw_devices[i]))
+                    return false;
+
+                const MTPDevice::Capabilities &cap = dev.getCapabilities();
+                std::cout << "  - can get  partial object: " << (cap.canGetPartialObject() ? "yes" : "no") << std::endl;
+                std::cout << "  - can send partial object: " << (cap.canSendPartialObject() ? "yes" : "no") << std::endl;
+                std::cout << "  - can edit objects       : " << (cap.canEditObjects() ? "yes" : "no") << std::endl;
+                dev.disconnect();
+            }
+#endif
+    }
+    free(static_cast<void*>(raw_devices));
+
+    return true;
 }

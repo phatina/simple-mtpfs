@@ -14,6 +14,9 @@ AC_PROG_INSTALL
 m4_include([m4/cxx11.m4])
 AX_CXX_COMPILE_STDCXX_11([noext])
 AC_CHECK_LIB([mtp], [LIBMTP_Init], [], [AC_MSG_ERROR([libmtp not found])])
+AC_CHECK_LIB([mtp], [LIBMTP_Check_Capability],
+    [AC_DEFINE([HAVE_LIBMTP_CHECK_CAPABILITY], [1], [Check device capabilities])],
+    [])
 AC_CHECK_HEADERS([libmtp.h])
 
 dnl Enable fdatasync, but not on OSX

@@ -364,6 +364,11 @@ void SMTPFileSystem::printVersion() const
     fuse_opt_free_args(&args);
 }
 
+bool SMTPFileSystem::listDevices() const
+{
+    return MTPDevice::listDevices(m_options.m_verbose);
+}
+
 bool SMTPFileSystem::exec()
 {
     if (!m_options.m_good)
