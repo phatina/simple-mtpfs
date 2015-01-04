@@ -35,7 +35,7 @@ std::string Logger::timestamp()
     time_info = localtime(&raw_time);
     std::stringstream ss;
     ss  << std::setfill('0') << std::setw(4) << time_info->tm_year + 1900
-        << '/' << std::setw(2) << time_info->tm_mon
+        << '/' << std::setw(2) << time_info->tm_mon + 1
         << '/' << std::setw(2) << time_info->tm_mday
         << ' ' << std::setw(2) << time_info->tm_hour
         << ':' << std::setw(2) << time_info->tm_min
