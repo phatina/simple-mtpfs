@@ -20,19 +20,20 @@ AC_CHECK_LIB([mtp], [LIBMTP_Check_Capability],
 AC_CHECK_HEADERS([libmtp.h])
 
 dnl Enable fdatasync, but not on OSX
-test `uname -s` == "Darwin" || AC_CHECK_FUNCS([fdatasync])
+os_name=$(uname -s)
+test "x$os_name" == "xDarwin" || AC_CHECK_FUNCS([fdatasync])
 
 PKG_CHECK_MODULES([FUSE], [fuse >= 2.7.3])
-AC_SUBST([FUSE_CFLAGS])
-AC_SUBST([FUSE_LIBS])
+if test "x$os_name" == "xDarwin"; then
+    AC_SUBST([FUSE_CFLAGS],["-D_FILE_OFFSET_BITS=64 -D_DARWIN_USE_64_BIT_INODE -I/usr/local/include/osxfuse"])
+    AC_SUBST([FUSE_LIBS],["-L/usr/local/lib -losxfuse -pthread -liconv"])
+fi
 
 PKG_CHECK_MODULES(
     [LIBUSB1],
     [libusb-1.0 >= 1.0.0],
     [AC_DEFINE([HAVE_LIBUSB1], [], [Have libusb 1.0])]
 )
-AC_SUBST([LIBUSB1_CFLAGS])
-AC_SUBST([LIBUSB1_LIBS])
 
 dnl Configurable temporary directory
 AC_ARG_WITH(
