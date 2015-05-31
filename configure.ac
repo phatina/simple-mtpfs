@@ -40,10 +40,6 @@ AC_ARG_WITH(
     [tmpdir],
     [AS_HELP_STRING([--with-tmpdir@<:=DIR@:>@],
         [Directory for temporary files, defaults to /tmp])],
-    [], []
-)
-AS_IF(
-    [test "x$withval" != "x"],
     [tmpdir="$withval"],
     [tmpdir="/tmp"]
 )
