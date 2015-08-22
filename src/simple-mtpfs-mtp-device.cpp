@@ -192,12 +192,10 @@ bool MTPDevice::connect(const std::string &dev_file)
         return false;
     }
 
-#ifdef HAVE_LIBUSB1
     // Try to reset USB device, so we don't wait until LIBMTP times out.
     // We do this every time we are about to mount a device, but better
     // connect on first try, than wait for 60s timeout.
     smtpfs_reset_device(raw_device);
-#endif // HAVE_LIBUSB1
 
     bool rval = connect(raw_device);
 
