@@ -180,15 +180,16 @@ int SMTPFileSystem::SMTPFileSystemOptions::opt_proc(void *data, const char *arg,
     SMTPFileSystemOptions *options = static_cast<SMTPFileSystemOptions*>(data);
 
     if (key == FUSE_OPT_KEY_NONOPT) {
-        if (options->m_mount_point && !options->m_device_file) {
-            options->m_device_file = options->m_mount_point;
-            options->m_mount_point = nullptr;
-        } else if (options->m_mount_point && options->m_device_file) {
+        if (options->m_mount_point && options->m_device_file) {
             // Unknown positional argument supplied
             return -1;
         }
+        if (options->m_device_file) {
+            fuse_opt_add_opt(&options->m_mount_point, arg);
+            return 0;
+        }
 
-        fuse_opt_add_opt(&options->m_mount_point, arg);
+        fuse_opt_add_opt(&options->m_device_file, arg);
         return 0;
     }
     return 1;
@@ -287,6 +288,11 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         return true;
     }
 
+    if (m_options.m_device_file && !m_options.m_mount_point) {
+        m_options.m_mount_point = m_options.m_device_file;
+        m_options.m_device_file = nullptr;
+    }
+
     if (!m_options.m_mount_point) {
         logerr("Mount point missing.\n");
         m_options.m_good = false;
@@ -326,7 +332,7 @@ void SMTPFileSystem::printHelp() const
         << "    -V   --version         print version\n\n"
         << "simple-mtpfs options:\n"
         << "    -v   --verbose         verbose output, implies -f\n"
-        << "    -l   --list-devices    print available devices\n"
+        << "    -l   --list-devices    print available devices. Supports <source> option\n"
         << "         --device          select a device number to mount\n"
         << "    -o enable-move         enable the move operations\n\n";
     fuse_opt_add_arg(&args, m_args.argv[0]);
@@ -350,7 +356,9 @@ void SMTPFileSystem::printVersion() const
 
 bool SMTPFileSystem::listDevices() const
 {
-    return MTPDevice::listDevices(m_options.m_verbose);
+    const std::string dev_file = m_options.m_device_file ? m_options.m_device_file : "";
+
+    return MTPDevice::listDevices(m_options.m_verbose, dev_file);
 }
 
 bool SMTPFileSystem::exec()

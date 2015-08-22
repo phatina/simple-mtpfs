@@ -646,10 +646,11 @@ MTPDevice::Capabilities MTPDevice::getCapabilities(const MTPDevice &device)
     return capabilities;
 }
 
-bool MTPDevice::listDevices(bool verbose)
+bool MTPDevice::listDevices(bool verbose, const std::string &dev_file)
 {
     int raw_devices_cnt;
     LIBMTP_raw_device_t *raw_devices;
+    std::string dev_path;
 
     // Do not output LIBMTP debug stuff
     StreamHelper::off();
@@ -663,7 +664,18 @@ bool MTPDevice::listDevices(bool verbose)
         return false;
     }
 
+    if (!dev_file.empty()) {
+        dev_path = smtpfs_realpath(dev_file);
+        if (dev_path.empty()) {
+            std::cerr << "Can not open such device '" << dev_file << "'.\n";
+            return false;
+        }
+    }
+
     for (int i = 0; i < raw_devices_cnt; ++i) {
+        if (!dev_file.empty() &&
+            dev_path != smtpfs_usb_devpath(raw_devices[i].bus_location, raw_devices[i].devnum))
+            continue;
         std::cout << i + 1 << ": "
             << (raw_devices[i].device_entry.vendor ? raw_devices[i].device_entry.vendor : "Unknown vendor ")
             << (raw_devices[i].device_entry.product ? raw_devices[i].device_entry.product : "Unknown product")

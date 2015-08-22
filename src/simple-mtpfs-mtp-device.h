@@ -85,7 +85,7 @@ public:
 
     Capabilities getCapabilities() const;
 
-    static bool listDevices(bool verbose = false);
+    static bool listDevices(bool verbose, const std::string &dev_file);
 
 private:
     void criticalEnter() { m_device_mutex.lock(); }
