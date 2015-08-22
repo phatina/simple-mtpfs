@@ -78,10 +78,8 @@ void StreamHelper::off()
     s_enabled = true;
 }
 
-#ifdef HAVE_LIBUSB1
 const char smtpfs_path_delimiter = '/';
 const std::string smtpfs_devbususb = "/dev/bus/usb/";
-#endif // HAVE_LIBUSB1
 
 std::string smtpfs_dirname(const std::string &path)
 {
@@ -156,6 +154,17 @@ bool smtpfs_remove_dir(const std::string &dirname)
     return true;
 }
 
+std::string smtpfs_usb_devpath(uint8_t bnum, uint8_t dnum)
+{
+    std::stringstream ss;
+    ss << smtpfs_devbususb
+       << std::setw(3) << std::setfill('0')
+       << static_cast<uint16_t>(bnum) << "/"
+       << std::setw(3) << std::setfill('0')
+       << static_cast<uint16_t>(dnum);
+    return ss.str();
+}
+
 #ifdef HAVE_LIBUSB1
 LIBMTP_raw_device_t *smtpfs_raw_device_new_priv(libusb_device *usb_device)
 {
@@ -205,15 +214,7 @@ LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path)
         dev = dev_list[i];
         uint8_t bnum = libusb_get_bus_number(dev_list[i]);
         uint8_t dnum = libusb_get_device_address(dev_list[i]);
-
-        std::stringstream ss;
-        ss << smtpfs_devbususb
-           << std::setw(3) << std::setfill('0')
-           << static_cast<uint16_t>(bnum) << "/"
-           << std::setw(3) << std::setfill('0')
-           << static_cast<uint16_t>(dnum);
-
-        if (ss.str() == dev_path)
+        if (smtpfs_usb_devpath(bnum, dnum) == dev_path)
             break;
         dev = nullptr;
     }

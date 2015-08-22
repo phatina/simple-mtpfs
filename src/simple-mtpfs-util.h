@@ -19,6 +19,7 @@
 #define SIMPLE_MTPFS_UTIL
 
 #include <config.h>
+#include <cstdint>
 #include <string>
 
 #ifdef HAVE_LIBUSB1
@@ -43,6 +44,7 @@ std::string smtpfs_dirname(const std::string &path);
 std::string smtpfs_basename(const std::string &path);
 std::string smtpfs_realpath(const std::string &path);
 std::string smtpfs_get_tmpdir();
+std::string smtpfs_usb_devpath(uint8_t bnum, uint8_t dnum);
 
 bool smtpfs_create_dir(const std::string &dirname);
 bool smtpfs_remove_dir(const std::string &dirname);

@@ -94,6 +94,7 @@ private:
     bool enumStorages();
 
     static Capabilities getCapabilities(const MTPDevice &device);
+    bool connect_priv(int dev_no, const std::string &dev_file);
 
 private:
     LIBMTP_mtpdevice_t *m_device;

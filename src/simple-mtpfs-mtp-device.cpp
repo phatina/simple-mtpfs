@@ -79,7 +79,7 @@ bool MTPDevice::connect(LIBMTP_raw_device_t *dev)
     return true;
 }
 
-bool MTPDevice::connect(int dev_no)
+bool MTPDevice::connect_priv(int dev_no, const std::string &dev_file)
 {
     if (m_device) {
         logerr("Already connected.\n");
@@ -94,12 +94,6 @@ bool MTPDevice::connect(int dev_no)
     LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
         &raw_devices, &raw_devices_cnt);
     StreamHelper::on();
-
-    if (dev_no < 0 || dev_no >= raw_devices_cnt) {
-        logerr("Can not connect to device no. ", dev_no + 1, ".\n");
-        free(static_cast<void*>(raw_devices));
-        return false;
-    }
 
     if (err != LIBMTP_ERROR_NONE) {
         switch(err) {
@@ -121,6 +115,31 @@ bool MTPDevice::connect(int dev_no)
         default:
             break;
         }
+        return false;
+    }
+
+#ifndef HAVE_LIBUSB1
+    if (!dev_file.empty()) {
+        std::string dev_path(smtpfs_realpath(dev_file));
+
+        for (dev_no = 0; dev_no < raw_devices_cnt; ++dev_no) {
+            std::string usb_devpath = smtpfs_usb_devpath(
+               raw_devices[dev_no].bus_location, raw_devices[dev_no].devnum);
+            if (usb_devpath == dev_path)
+                break;
+        }
+
+        if (dev_no == raw_devices_cnt) {
+            logerr("Can not open such device '", dev_file, "'.\n");
+            free(static_cast<void*>(raw_devices));
+            return false;
+        }
+    }
+#endif // !HAVE_LIBUSB1
+
+    if (dev_no < 0 || dev_no >= raw_devices_cnt) {
+        logerr("Can not connect to device no. ", dev_no + 1, ".\n");
+        free(static_cast<void*>(raw_devices));
         return false;
     }
 
@@ -154,6 +173,11 @@ bool MTPDevice::connect(int dev_no)
     return true;
 }
 
+bool MTPDevice::connect(int dev_no)
+{
+    return connect_priv(dev_no, std::string());
+}
+
 #ifdef HAVE_LIBUSB1
 bool MTPDevice::connect(const std::string &dev_file)
 {
@@ -181,6 +205,11 @@ bool MTPDevice::connect(const std::string &dev_file)
     smtpfs_raw_device_free(raw_device);
 
     return rval;
+}
+#else
+bool MTPDevice::connect(const std::string &dev_file)
+{
+    return connect_priv(-1, dev_file);
 }
 #endif
 
