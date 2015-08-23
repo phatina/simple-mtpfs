@@ -38,7 +38,7 @@ PKG_CHECK_MODULES(
 dnl Configurable temporary directory
 AC_ARG_WITH(
     [tmpdir],
-    [AS_HELP_STRING([--with-tmpdir@<:=DIR@:>@],
+    [AS_HELP_STRING([--with-tmpdir=DIR],
         [Directory for temporary files, defaults to /tmp])],
     [tmpdir="$withval"],
     [tmpdir="/tmp"]
