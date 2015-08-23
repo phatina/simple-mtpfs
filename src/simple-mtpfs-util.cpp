@@ -16,6 +16,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <config.h>
+#include <cstdio>
 #include <cstring>
 #ifdef HAVE_LIBUSB1
 #  include <iomanip>
@@ -77,9 +78,6 @@ void StreamHelper::off()
 
     s_enabled = true;
 }
-
-const char smtpfs_path_delimiter = '/';
-const std::string smtpfs_devbususb = "/dev/bus/usb/";
 
 std::string smtpfs_dirname(const std::string &path)
 {
@@ -154,15 +152,23 @@ bool smtpfs_remove_dir(const std::string &dirname)
     return true;
 }
 
-std::string smtpfs_usb_devpath(uint8_t bnum, uint8_t dnum)
+bool smtpfs_usb_devpath(const std::string &path, uint8_t *bnum, uint8_t *dnum)
 {
-    std::stringstream ss;
-    ss << smtpfs_devbususb
-       << std::setw(3) << std::setfill('0')
-       << static_cast<uint16_t>(bnum) << "/"
-       << std::setw(3) << std::setfill('0')
-       << static_cast<uint16_t>(dnum);
-    return ss.str();
+    unsigned int bus, dev;
+#ifdef USB_DEVPATH
+    std::string realpath(smtpfs_realpath(path));
+    if (realpath.empty() ||
+        sscanf(realpath.c_str(), USB_DEVPATH, &bus, &dev) != 2)
+#endif
+        if (sscanf(path.c_str(), "%u/%u", &bus, &dev) != 2)
+            return false;
+
+    if (bus > 255 || dev > 255)
+        return false;
+
+    *bnum = bus;
+    *dnum = dev;
+    return true;
 }
 
 #ifdef HAVE_LIBUSB1
@@ -198,10 +204,13 @@ LIBMTP_raw_device_t *smtpfs_raw_device_new_priv(libusb_device *usb_device)
 
 LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path)
 {
+    uint8_t bnum, dnum;
+    if (!smtpfs_usb_devpath(path, &bnum, &dnum))
+        return nullptr;
+
     if (libusb_init(NULL) != 0)
         return nullptr;
 
-    std::string dev_path(smtpfs_realpath(path));
     libusb_device **dev_list;
     ssize_t num_devs = libusb_get_device_list(NULL, &dev_list);
     if (!num_devs) {
@@ -212,9 +221,8 @@ LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path)
     libusb_device *dev = nullptr;
     for (auto i = 0; i < num_devs; ++i) {
         dev = dev_list[i];
-        uint8_t bnum = libusb_get_bus_number(dev_list[i]);
-        uint8_t dnum = libusb_get_device_address(dev_list[i]);
-        if (smtpfs_usb_devpath(bnum, dnum) == dev_path)
+        if (bnum == libusb_get_bus_number(dev_list[i]) &&
+            dnum == libusb_get_device_address(dev_list[i]))
             break;
         dev = nullptr;
     }

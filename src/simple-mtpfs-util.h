@@ -44,11 +44,11 @@ std::string smtpfs_dirname(const std::string &path);
 std::string smtpfs_basename(const std::string &path);
 std::string smtpfs_realpath(const std::string &path);
 std::string smtpfs_get_tmpdir();
-std::string smtpfs_usb_devpath(uint8_t bnum, uint8_t dnum);
 
 bool smtpfs_create_dir(const std::string &dirname);
 bool smtpfs_remove_dir(const std::string &dirname);
 bool smtpfs_check_dir(const std::string &path);
+bool smtpfs_usb_devpath(const std::string &path, uint8_t *bnum, uint8_t *dnum);
 
 #ifdef HAVE_LIBUSB1
 LIBMTP_raw_device_t *smtpfs_raw_device_new(const std::string &path);

@@ -20,6 +20,7 @@
 #include <sstream>
 #include <vector>
 #include <cstring>
+#include <cstdint>
 #include <cstdlib>
 extern "C" {
 #  include <unistd.h>
@@ -120,14 +121,14 @@ bool MTPDevice::connect_priv(int dev_no, const std::string &dev_file)
 
 #ifndef HAVE_LIBUSB1
     if (!dev_file.empty()) {
-        std::string dev_path(smtpfs_realpath(dev_file));
+        uint8_t bnum, dnum;
+        dev_no = raw_devices_cnt;
 
-        for (dev_no = 0; dev_no < raw_devices_cnt; ++dev_no) {
-            std::string usb_devpath = smtpfs_usb_devpath(
-               raw_devices[dev_no].bus_location, raw_devices[dev_no].devnum);
-            if (usb_devpath == dev_path)
-                break;
-        }
+        if (smtpfs_usb_devpath(dev_file, &bnum, &dnum))
+            for (dev_no = 0; dev_no < raw_devices_cnt; ++dev_no)
+                if (bnum == raw_devices[dev_no].bus_location &&
+                    dnum == raw_devices[dev_no].devnum)
+                    break;
 
         if (dev_no == raw_devices_cnt) {
             logerr("Can not open such device '", dev_file, "'.\n");
@@ -648,7 +649,6 @@ bool MTPDevice::listDevices(bool verbose, const std::string &dev_file)
 {
     int raw_devices_cnt;
     LIBMTP_raw_device_t *raw_devices;
-    std::string dev_path;
 
     // Do not output LIBMTP debug stuff
     StreamHelper::off();
@@ -662,17 +662,15 @@ bool MTPDevice::listDevices(bool verbose, const std::string &dev_file)
         return false;
     }
 
-    if (!dev_file.empty()) {
-        dev_path = smtpfs_realpath(dev_file);
-        if (dev_path.empty()) {
-            std::cerr << "Can not open such device '" << dev_file << "'.\n";
-            return false;
-        }
+    uint8_t bnum, dnum;
+    if (!dev_file.empty() && !smtpfs_usb_devpath(dev_file, &bnum, &dnum)) {
+        std::cerr << "Can not open such device '" << dev_file << "'.\n";
+        return false;
     }
 
     for (int i = 0; i < raw_devices_cnt; ++i) {
         if (!dev_file.empty() &&
-            dev_path != smtpfs_usb_devpath(raw_devices[i].bus_location, raw_devices[i].devnum))
+            !(bnum == raw_devices[i].bus_location && dnum == raw_devices[i].devnum))
             continue;
         std::cout << i + 1 << ": "
             << (raw_devices[i].device_entry.vendor ? raw_devices[i].device_entry.vendor : "Unknown vendor ")
