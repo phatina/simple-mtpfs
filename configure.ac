@@ -38,7 +38,7 @@ PKG_CHECK_MODULES(
 dnl Configurable temporary directory
 AC_ARG_WITH(
     [tmpdir],
-    [AS_HELP_STRING([--with-tmpdir@<:=DIR@:>@],
+    [AS_HELP_STRING([--with-tmpdir=DIR],
         [Directory for temporary files, defaults to /tmp])],
     [tmpdir="$withval"],
     [tmpdir="/tmp"]
@@ -48,6 +48,35 @@ AC_DEFINE_UNQUOTED(
     ["${tmpdir}"],
     [Directory for temporary files]
 )
+
+dnl Configurable USB device path
+case $os_name in
+    Linux)
+        usb_devpath="/dev/bus/usb/%u/%u"
+        ;;
+    FreeBSD)
+        usb_devpath="/dev/usb/%u.%u.0"
+        ;;
+    *)
+        usb_devpath="%u/%u"
+        ;;
+esac
+AC_ARG_WITH(
+    [usbdev],
+    [AS_HELP_STRING([--with-usbdev=FILE],
+        [USB device path. String in sscanf() format])],
+    [usb_devpath="$withval"],
+    []
+)
+if test "x$usb_devpath" != "x%u/%u"; then
+    AC_DEFINE_UNQUOTED(
+        [USB_DEVPATH],
+        ["$usb_devpath"],
+        [USB device path format string]
+    )
+else
+    AC_MSG_WARN([Mounting by real device path is not supported. Fallback to <bus>/<device> notation]);
+fi
 
 AC_OUTPUT([
     makefile
@@ -62,6 +91,7 @@ AC_MSG_NOTICE([
 
     prefix: ${prefix}
     tmpdir: ${tmpdir}
+    usbdev: ${usb_devpath}
 
     Now type 'make' to build $PACKAGE
 ])

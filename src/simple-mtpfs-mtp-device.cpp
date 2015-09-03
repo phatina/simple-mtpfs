@@ -20,6 +20,7 @@
 #include <sstream>
 #include <vector>
 #include <cstring>
+#include <cstdint>
 #include <cstdlib>
 extern "C" {
 #  include <unistd.h>
@@ -79,7 +80,7 @@ bool MTPDevice::connect(LIBMTP_raw_device_t *dev)
     return true;
 }
 
-bool MTPDevice::connect(int dev_no)
+bool MTPDevice::connect_priv(int dev_no, const std::string &dev_file)
 {
     if (m_device) {
         logerr("Already connected.\n");
@@ -94,12 +95,6 @@ bool MTPDevice::connect(int dev_no)
     LIBMTP_error_number_t err = LIBMTP_Detect_Raw_Devices(
         &raw_devices, &raw_devices_cnt);
     StreamHelper::on();
-
-    if (dev_no < 0 || dev_no >= raw_devices_cnt) {
-        logerr("Can not connect to device no. ", dev_no + 1, ".\n");
-        free(static_cast<void*>(raw_devices));
-        return false;
-    }
 
     if (err != LIBMTP_ERROR_NONE) {
         switch(err) {
@@ -121,6 +116,31 @@ bool MTPDevice::connect(int dev_no)
         default:
             break;
         }
+        return false;
+    }
+
+#ifndef HAVE_LIBUSB1
+    if (!dev_file.empty()) {
+        uint8_t bnum, dnum;
+        dev_no = raw_devices_cnt;
+
+        if (smtpfs_usb_devpath(dev_file, &bnum, &dnum))
+            for (dev_no = 0; dev_no < raw_devices_cnt; ++dev_no)
+                if (bnum == raw_devices[dev_no].bus_location &&
+                    dnum == raw_devices[dev_no].devnum)
+                    break;
+
+        if (dev_no == raw_devices_cnt) {
+            logerr("Can not open such device '", dev_file, "'.\n");
+            free(static_cast<void*>(raw_devices));
+            return false;
+        }
+    }
+#endif // !HAVE_LIBUSB1
+
+    if (dev_no < 0 || dev_no >= raw_devices_cnt) {
+        logerr("Can not connect to device no. ", dev_no + 1, ".\n");
+        free(static_cast<void*>(raw_devices));
         return false;
     }
 
@@ -154,6 +174,11 @@ bool MTPDevice::connect(int dev_no)
     return true;
 }
 
+bool MTPDevice::connect(int dev_no)
+{
+    return connect_priv(dev_no, std::string());
+}
+
 #ifdef HAVE_LIBUSB1
 bool MTPDevice::connect(const std::string &dev_file)
 {
@@ -168,12 +193,10 @@ bool MTPDevice::connect(const std::string &dev_file)
         return false;
     }
 
-#ifdef HAVE_LIBUSB1
     // Try to reset USB device, so we don't wait until LIBMTP times out.
     // We do this every time we are about to mount a device, but better
     // connect on first try, than wait for 60s timeout.
     smtpfs_reset_device(raw_device);
-#endif // HAVE_LIBUSB1
 
     bool rval = connect(raw_device);
 
@@ -181,6 +204,11 @@ bool MTPDevice::connect(const std::string &dev_file)
     smtpfs_raw_device_free(raw_device);
 
     return rval;
+}
+#else
+bool MTPDevice::connect(const std::string &dev_file)
+{
+    return connect_priv(-1, dev_file);
 }
 #endif
 
@@ -617,7 +645,7 @@ MTPDevice::Capabilities MTPDevice::getCapabilities(const MTPDevice &device)
     return capabilities;
 }
 
-bool MTPDevice::listDevices(bool verbose)
+bool MTPDevice::listDevices(bool verbose, const std::string &dev_file)
 {
     int raw_devices_cnt;
     LIBMTP_raw_device_t *raw_devices;
@@ -634,7 +662,16 @@ bool MTPDevice::listDevices(bool verbose)
         return false;
     }
 
+    uint8_t bnum, dnum;
+    if (!dev_file.empty() && !smtpfs_usb_devpath(dev_file, &bnum, &dnum)) {
+        std::cerr << "Can not open such device '" << dev_file << "'.\n";
+        return false;
+    }
+
     for (int i = 0; i < raw_devices_cnt; ++i) {
+        if (!dev_file.empty() &&
+            !(bnum == raw_devices[i].bus_location && dnum == raw_devices[i].devnum))
+            continue;
         std::cout << i + 1 << ": "
             << (raw_devices[i].device_entry.vendor ? raw_devices[i].device_entry.vendor : "Unknown vendor ")
             << (raw_devices[i].device_entry.product ? raw_devices[i].device_entry.product : "Unknown product")

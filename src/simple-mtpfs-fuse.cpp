@@ -161,18 +161,14 @@ SMTPFileSystem::SMTPFileSystemOptions::SMTPFileSystemOptions()
     , m_enable_move(false)
     , m_list_devices(false)
     , m_device_no(1)
-#ifdef HAVE_LIBUSB1
     , m_device_file(nullptr)
-#endif // HAVE_LIBUSB1
     , m_mount_point(nullptr)
 {
 }
 
 SMTPFileSystem::SMTPFileSystemOptions::~SMTPFileSystemOptions()
 {
-#ifdef HAVE_LIBUSB1
     free(static_cast<void*>(m_device_file));
-#endif // HAVE_LIBUSB1
     free(static_cast<void*>(m_mount_point));
 }
 
@@ -184,22 +180,16 @@ int SMTPFileSystem::SMTPFileSystemOptions::opt_proc(void *data, const char *arg,
     SMTPFileSystemOptions *options = static_cast<SMTPFileSystemOptions*>(data);
 
     if (key == FUSE_OPT_KEY_NONOPT) {
-#ifdef HAVE_LIBUSB1
-        if (options->m_mount_point && !options->m_device_file) {
-            options->m_device_file = options->m_mount_point;
-            options->m_mount_point = nullptr;
-        } else if (options->m_mount_point && options->m_device_file) {
+        if (options->m_mount_point && options->m_device_file) {
             // Unknown positional argument supplied
             return -1;
         }
-#else
-        if (options->m_mount_point) {
-            // Unknown positional argument supplied
-            return -1;
+        if (options->m_device_file) {
+            fuse_opt_add_opt(&options->m_mount_point, arg);
+            return 0;
         }
-#endif //HAVE_LIBUSB1
 
-        fuse_opt_add_opt(&options->m_mount_point, arg);
+        fuse_opt_add_opt(&options->m_device_file, arg);
         return 0;
     }
     return 1;
@@ -298,6 +288,11 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
         return true;
     }
 
+    if (m_options.m_device_file && !m_options.m_mount_point) {
+        m_options.m_mount_point = m_options.m_device_file;
+        m_options.m_device_file = nullptr;
+    }
+
     if (!m_options.m_mount_point) {
         logerr("Mount point missing.\n");
         m_options.m_good = false;
@@ -314,13 +309,11 @@ bool SMTPFileSystem::parseOptions(int argc, char **argv)
 
     --m_options.m_device_no;
 
-#ifdef HAVE_LIBUSB1
     // device file and -- device are mutually exclusive, fail if both set
     if (m_options.m_device_no && m_options.m_device_file) {
         m_options.m_good = false;
         return false;
     }
-#endif // HAVE_LIBUSB1
 
     m_options.m_good = true;
     return true;
@@ -332,17 +325,14 @@ void SMTPFileSystem::printHelp() const
     struct fuse_operations tmp_operations;
     memset(&tmp_operations, 0, sizeof(tmp_operations));
     std::cerr << "usage: " << smtpfs_basename(m_args.argv[0])
-#ifdef HAVE_LIBUSB1
-              << " <source>"
-#endif // HAVE_LIBUSB1
-              << " mountpoint [options]\n\n"
+              << " <source> mountpoint [options]\n\n"
         << "general options:\n"
         << "    -o opt,[opt...]        mount options\n"
         << "    -h   --help            print help\n"
         << "    -V   --version         print version\n\n"
         << "simple-mtpfs options:\n"
         << "    -v   --verbose         verbose output, implies -f\n"
-        << "    -l   --list-devices    print available devices\n"
+        << "    -l   --list-devices    print available devices. Supports <source> option\n"
         << "         --device          select a device number to mount\n"
         << "    -o enable-move         enable the move operations\n\n";
     fuse_opt_add_arg(&args, m_args.argv[0]);
@@ -366,7 +356,9 @@ void SMTPFileSystem::printVersion() const
 
 bool SMTPFileSystem::listDevices() const
 {
-    return MTPDevice::listDevices(m_options.m_verbose);
+    const std::string dev_file = m_options.m_device_file ? m_options.m_device_file : "";
+
+    return MTPDevice::listDevices(m_options.m_verbose, dev_file);
 }
 
 bool SMTPFileSystem::exec()
@@ -387,14 +379,11 @@ bool SMTPFileSystem::exec()
         return false;
     }
 
-#ifdef HAVE_LIBUSB1
     if (m_options.m_device_file) {
         // Try to use device file first, if provided
         if (!m_device.connect(m_options.m_device_file))
             return false;
-    } else
-#endif // HAVE_LIBUSB1
-    {
+    } else {
         // Connect to MTP device by order number, if no device file supplied
         if (!m_device.connect(m_options.m_device_no))
             return false;

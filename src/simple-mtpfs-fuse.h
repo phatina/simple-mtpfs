@@ -41,9 +41,7 @@ private:
         int m_enable_move;
         int m_list_devices;
         int m_device_no;
-#ifdef HAVE_LIBUSB1
         char *m_device_file;
-#endif // HAVE_LIBUSB1
         char *m_mount_point;
 
         SMTPFileSystemOptions();

@@ -85,7 +85,7 @@ public:
 
     Capabilities getCapabilities() const;
 
-    static bool listDevices(bool verbose = false);
+    static bool listDevices(bool verbose, const std::string &dev_file);
 
 private:
     void criticalEnter() { m_device_mutex.lock(); }
@@ -94,6 +94,7 @@ private:
     bool enumStorages();
 
     static Capabilities getCapabilities(const MTPDevice &device);
+    bool connect_priv(int dev_no, const std::string &dev_file);
 
 private:
     LIBMTP_mtpdevice_t *m_device;
