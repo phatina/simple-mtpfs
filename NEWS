@@ -1,3 +1,7 @@
+New in version 0.2.1:
+- mount by device file (eg. /dev/libmtp-*)
+- various fixes, improvements and code cleanup
+
 New in version 0.2:
 - introduced special device file as mount parameter
   - MTP device can be specified by special file placed in /dev
