@@ -146,13 +146,6 @@ bool MTPDevice::connect_priv(int dev_no, const std::string &dev_file)
 
     LIBMTP_raw_device_t *raw_device = &raw_devices[dev_no];
 
-#ifdef HAVE_LIBUSB1
-    // Try to reset USB device, so we don't wait until LIBMTP times out.
-    // We do this every time we are about to mount a device, but better
-    // connect on first try, than wait for 60s timeout.
-    smtpfs_reset_device(raw_device);
-#endif // HAVE_LIBUSB1
-
     // Do not output LIBMTP debug stuff
     StreamHelper::off();
     m_device = LIBMTP_Open_Raw_Device_Uncached(raw_device);
@@ -192,11 +185,6 @@ bool MTPDevice::connect(const std::string &dev_file)
         logerr("Can not open such device '", dev_file, "'.\n");
         return false;
     }
-
-    // Try to reset USB device, so we don't wait until LIBMTP times out.
-    // We do this every time we are about to mount a device, but better
-    // connect on first try, than wait for 60s timeout.
-    smtpfs_reset_device(raw_device);
 
     bool rval = connect(raw_device);
 
