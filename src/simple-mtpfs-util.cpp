@@ -116,7 +116,7 @@ std::string smtpfs_get_tmpdir()
     }
 
     tmp_dir += "/simple-mtpfs-XXXXXX";
-    char *c_tmp_dir = ::mktemp(::strdup(tmp_dir.c_str()));
+    char *c_tmp_dir = ::mkdtemp(::strdup(tmp_dir.c_str()));
 
     tmp_dir.assign(c_tmp_dir);
     ::free(static_cast<void*>(c_tmp_dir));
