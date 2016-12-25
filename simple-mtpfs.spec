@@ -1,5 +1,5 @@
 Name:          simple-mtpfs
-Version:       0.2.1
+Version:       0.3.0
 Release:       1%{?dist}
 Summary:       Fuse-based MTP driver
 License:       GPLv2+
@@ -34,7 +34,10 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %{_mandir}/man1/simple-mtpfs.1.gz
 
 %changelog
-* Sun Nov 27 2016 Peter Hatina <phatina@gmail.com> - 0.2.1.-1
+* Sun Dec 25 2016 Peter Hatina <phatina@gmail.com> - 0.3.0-1
+- upgrade to v0.3.0
+
+* Sun Nov 27 2016 Peter Hatina <phatina@gmail.com> - 0.2.1-1
 - upgrade to v0.2.1
 
 * Tue Dec  3 2013 Peter Hatina <phatina@redhat.com> - 0.2-1

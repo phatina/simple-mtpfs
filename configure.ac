@@ -1,5 +1,5 @@
 AC_PREREQ([2.60])
-AC_INIT([simple-mtpfs], [0.2.1], [phatina@gmail.com])
+AC_INIT([simple-mtpfs], [0.3.0], [phatina@gmail.com])
 
 AC_CONFIG_MACRO_DIR([m4])
 
