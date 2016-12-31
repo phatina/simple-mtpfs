@@ -3,18 +3,20 @@ simple_mtpfs_CXXFLAGS = -Wall -pedantic $(FUSE_CFLAGS) $(LIBUSB1_CFLAGS)
 simple_mtpfs_CPPFLAGS = -DFUSE_USE_VERSION=28
 simple_mtpfs_LDADD    = $(MTP_LIBS) $(FUSE_LIBS) $(LIBUSB1_LIBS)
 simple_mtpfs_SOURCES  =                 \
-	simple-mtpfs-fuse.h             \
 	simple-mtpfs-libmtp.h           \
 	simple-mtpfs-log.h              \
 	simple-mtpfs-mtp-device.h       \
 	simple-mtpfs-sha1.h             \
+	simple-mtpfs-driver-base.h      \
+	simple-mtpfs-tmpdir-driver.h    \
 	simple-mtpfs-tmp-files-pool.h   \
 	simple-mtpfs-type-basic.h       \
 	simple-mtpfs-type-dir.h         \
 	simple-mtpfs-type-file.h        \
 	simple-mtpfs-type-tmp-file.h    \
 	simple-mtpfs-util.h             \
-	simple-mtpfs-fuse.cpp           \
+	simple-mtpfs-driver-base.cpp    \
+	simple-mtpfs-tmpdir-driver.cpp  \
 	simple-mtpfs-libmtp.cpp         \
 	simple-mtpfs-log.cpp            \
 	simple-mtpfs-main.cpp           \

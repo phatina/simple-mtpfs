@@ -83,6 +83,9 @@ public:
     int fileRemove(const std::string &path);
     int fileRename(const std::string &oldpath, const std::string &newpath);
 
+    int fileGetPartial();
+    int filePutPartial();
+
     Capabilities getCapabilities() const;
 
     static bool listDevices(bool verbose, const std::string &dev_file);

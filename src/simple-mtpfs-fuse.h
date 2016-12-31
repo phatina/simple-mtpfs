@@ -18,6 +18,7 @@
 #ifndef SMTPFS_FUSE_H
 #define SMTPFS_FUSE_H
 
+// C
 #include <config.h>
 #include <memory>
 #include <string>
@@ -25,6 +26,9 @@
 extern "C" {
 #  include <fuse/fuse.h>
 }
+
+// Own
+#include "simple-mtpfs-driver-base.h"
 #include "simple-mtpfs-mtp-device.h"
 #include "simple-mtpfs-tmp-files-pool.h"
 #include "simple-mtpfs-type-tmp-file.h"
@@ -104,17 +108,12 @@ public:
     int create(const char *path, mode_t mode, fuse_file_info *file_info);
 
 private:
-    static bool removeDir(const std::string &dirname);
-
-    bool createTmpDir();
-    bool removeTmpDir();
-
     static std::unique_ptr<SMTPFileSystem> s_instance;
     struct fuse_args m_args;
     struct fuse_operations m_fuse_operations;
-    TmpFilesPool m_tmp_files_pool;
     SMTPFileSystemOptions m_options;
-    MTPDevice m_device;
+
+    std::unique_ptr<DriverBase> m_driver;
 };
 
 #endif // SMTPFS_FUSE_H

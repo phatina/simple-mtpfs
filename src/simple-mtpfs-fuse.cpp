@@ -205,10 +205,9 @@ SMTPFileSystem *SMTPFileSystem::instance()
 }
 
 SMTPFileSystem::SMTPFileSystem():
-    m_args(),
-    m_tmp_files_pool(),
-    m_options(),
-    m_device()
+    m_args{},
+    m_fuse_operations{},
+    m_options{}
 {
     m_fuse_operations.getattr = wrap_getattr;
     m_fuse_operations.readlink = nullptr;
