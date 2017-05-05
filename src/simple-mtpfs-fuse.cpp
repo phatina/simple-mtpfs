@@ -493,15 +493,15 @@ int SMTPFileSystem::rename(const char *path, const char *newpath)
     const std::string tmp_file = m_tmp_files_pool.makeTmpPath(std::string(newpath));
     int rval = m_device.filePull(std::string(path), tmp_file);
     if (rval != 0)
-        return -rval;
+        return rval;
 
     rval = m_device.filePush(tmp_file, std::string(newpath));
     if (rval != 0)
-        return -rval;
+        return rval;
 
     rval = m_device.fileRemove(std::string(path));
     if (rval != 0)
-        return -rval;
+        return rval;
 
     return 0;
 }
@@ -522,7 +522,7 @@ int SMTPFileSystem::truncate(const char *path, off_t new_size)
     int rval = m_device.filePull(std::string(path), tmp_path);
     if (rval != 0) {
         ::unlink(tmp_path.c_str());
-        return -rval;
+        return rval;
     }
 
     rval = ::truncate(tmp_path.c_str(), new_size);
@@ -535,14 +535,14 @@ int SMTPFileSystem::truncate(const char *path, off_t new_size)
     rval = m_device.fileRemove(std::string(path));
     if (rval != 0) {
         ::unlink(tmp_path.c_str());
-        return -rval;
+        return rval;
     }
 
     rval = m_device.filePush(tmp_path, std::string(path));
     ::unlink(tmp_path.c_str());
 
     if (rval != 0)
-        return -rval;
+        return rval;
 
     return 0;
 }
@@ -598,7 +598,7 @@ int SMTPFileSystem::open(const char *path, struct fuse_file_info *file_info)
 
         int rval = m_device.filePull(std_path, tmp_path);
         if (rval != 0)
-            return -rval;
+            return rval;
     }
 
     int fd = ::open(tmp_path.c_str(), file_info->flags);
@@ -664,7 +664,7 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
         rval = m_device.filePush(tmp_path, std_path);
         if (rval != 0) {
             ::unlink(tmp_path.c_str());
-            return -rval;
+            return rval;
         }
     }
 
