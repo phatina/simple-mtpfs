@@ -104,6 +104,7 @@ public:
     int create(const char *path, mode_t mode, fuse_file_info *file_info);
 
 private:
+    bool hasPartialObjectSupport();
 
     static std::unique_ptr<SMTPFileSystem> s_instance;
     struct fuse_args m_args;

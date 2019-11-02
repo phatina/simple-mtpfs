@@ -78,6 +78,8 @@ public:
 
     int rename(const std::string &oldpath, const std::string &newpath);
 
+    int fileRead(const std::string &path, char *buf, size_t size, off_t offset);
+    int fileWrite(const std::string &path, const char *buf, size_t size, off_t offset);
     int filePull(const std::string &src, const std::string &dst);
     int filePush(const std::string &src, const std::string &dst);
     int fileRemove(const std::string &path);
