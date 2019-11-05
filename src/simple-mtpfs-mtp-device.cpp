@@ -467,6 +467,64 @@ int MTPDevice::rename(const std::string &oldpath, const std::string &newpath)
 #endif
 }
 
+int MTPDevice::fileRead(const std::string &path, char *buf, size_t size,
+    off_t offset)
+{
+    const std::string path_basename(smtpfs_basename(path));
+    const std::string path_dirname(smtpfs_dirname(path));
+    const TypeDir *dir_parent = dirFetchContent(path_dirname);
+    const TypeFile *file_to_fetch = dir_parent ?
+        dir_parent->file(path_basename) : nullptr;
+    if (!dir_parent) {
+        logerr("Can not fetch '", path, "'.\n");
+        return -EINVAL;
+    }
+    if (!file_to_fetch) {
+        logerr("No such file '", path, "'.\n");
+        return -ENOENT;
+    }
+
+    // all systems clear
+    unsigned char *tmp_buf;
+    unsigned int tmp_size;
+    int rval = LIBMTP_GetPartialObject(m_device, file_to_fetch->id(),
+        offset, size, &tmp_buf, &tmp_size);
+    if (tmp_size > 0) {
+        memcpy(buf, tmp_buf, tmp_size);
+        free(tmp_buf);
+    }
+
+    if (rval != 0)
+        return -EIO;
+    return tmp_size;
+}
+
+int MTPDevice::fileWrite(const std::string &path, const char *buf, size_t size,
+    off_t offset)
+{
+    const std::string path_basename(smtpfs_basename(path));
+    const std::string path_dirname(smtpfs_dirname(path));
+    const TypeDir *dir_parent = dirFetchContent(path_dirname);
+    const TypeFile *file_to_fetch = dir_parent ?
+        dir_parent->file(path_basename) : nullptr;
+    if (!dir_parent) {
+        logerr("Can not fetch '", path, "'.\n");
+        return -EINVAL;
+    }
+    if (!file_to_fetch) {
+        logerr("No such file '", path, "'.\n");
+        return -ENOENT;
+    }
+
+    // all systems clear
+    int rval = LIBMTP_SendPartialObject(m_device, file_to_fetch->id(),
+        offset, (unsigned char *) buf, size);
+
+    if (rval < 0)
+        return -EIO;
+    return size;
+}
+
 int MTPDevice::filePull(const std::string &src, const std::string &dst)
 {
     const std::string src_basename(smtpfs_basename(src));
