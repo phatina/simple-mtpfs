@@ -394,7 +394,10 @@ bool SMTPFileSystem::exec()
     }
     m_device.disconnect();
 
-    m_tmp_files_pool.removeTmpDir();
+    if (!m_tmp_files_pool.removeTmpDir()) {
+        logerr("Can not remove a temporary directory.\n");
+        return false;
+    }
 
     return true;
 }
@@ -460,8 +463,12 @@ int SMTPFileSystem::mknod(const char *path, mode_t mode, dev_t dev)
     if (rval < 0)
         return -errno;
 
-    m_device.filePush(tmp_path, std::string(path));
+    rval = m_device.filePush(tmp_path, std::string(path));
     ::unlink(tmp_path.c_str());
+
+    if (rval != 0)
+        return rval;
+
     return 0;
 }
 
@@ -575,7 +582,10 @@ int SMTPFileSystem::create(const char *path, mode_t mode, fuse_file_info *file_i
 
     file_info->fh = rval;
     m_tmp_files_pool.addFile(TypeTmpFile(std::string(path), tmp_path, rval, true));
-    m_device.filePush(tmp_path, std::string(path));
+    rval = m_device.filePush(tmp_path, std::string(path));
+
+    if (rval != 0)
+        return rval;
 
     return 0;
 }
