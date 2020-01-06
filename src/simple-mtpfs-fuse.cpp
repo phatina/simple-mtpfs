@@ -394,7 +394,10 @@ bool SMTPFileSystem::exec()
     }
     m_device.disconnect();
 
-    m_tmp_files_pool.removeTmpDir();
+    if (!m_tmp_files_pool.removeTmpDir()) {
+        logerr("Can not remove a temporary directory.\n");
+        return false;
+    }
 
     return true;
 }

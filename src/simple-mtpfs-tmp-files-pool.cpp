@@ -58,8 +58,9 @@ std::string TmpFilesPool::makeTmpPath(const std::string &path_device) const
 
 bool TmpFilesPool::createTmpDir()
 {
-    removeTmpDir();
-    return smtpfs_create_dir(m_tmp_dir);
+    if (removeTmpDir())
+        return smtpfs_create_dir(m_tmp_dir);
+    return false;
 }
 
 bool TmpFilesPool::removeTmpDir()
