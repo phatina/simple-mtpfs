@@ -1,5 +1,5 @@
-AC_PREREQ([2.60])
-AC_INIT([simple-mtpfs], [0.3.0], [phatina@gmail.com])
+AC_PREREQ([2.69])
+AC_INIT([simple-mtpfs],[0.3.0],[phatina@gmail.com])
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -78,11 +78,12 @@ else
     AC_MSG_WARN([Mounting by real device path is not supported. Fallback to <bus>/<device> notation]);
 fi
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
     makefile
     src/makefile
     man/makefile
 ])
+AC_OUTPUT
 
 AC_MSG_NOTICE([
 
