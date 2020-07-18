@@ -19,7 +19,7 @@
 #include <iostream>
 extern "C" {
 #  include <errno.h>
-#  include <fuse/fuse_opt.h>
+#  include <fuse_opt.h>
 #  include <unistd.h>
 #  include <stddef.h>
 }
