@@ -1,18 +1,18 @@
-AC_PREREQ([2.60])
-AC_INIT([simple-mtpfs], [0.3.0], [phatina@gmail.com])
+AC_PREREQ([2.69])
+AC_INIT([simple-mtpfs],[0.3.0],[phatina@gmail.com])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
-AC_CONFIG_HEADERS(config.h)
-AM_SILENT_RULES([yes])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 -Wall])
+AC_CONFIG_SRCDIR([src/simple-mtpfs-fuse.cpp])
+AC_CONFIG_HEADERS([config.h])
 
 AC_LANG([C++])
 AC_PROG_CXX
 AC_PROG_INSTALL
 
-m4_include([m4/cxx11.m4])
 AX_CXX_COMPILE_STDCXX_11([noext])
+AX_CXXFLAGS_WARN_ALL
 AC_CHECK_LIB([mtp], [LIBMTP_Init], [], [AC_MSG_ERROR([libmtp not found])])
 AC_CHECK_LIB([mtp], [LIBMTP_Check_Capability],
     [AC_DEFINE([HAVE_LIBMTP_CHECK_CAPABILITY], [1], [Check device capabilities])],
@@ -78,11 +78,12 @@ else
     AC_MSG_WARN([Mounting by real device path is not supported. Fallback to <bus>/<device> notation]);
 fi
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
     makefile
     src/makefile
     man/makefile
 ])
+AC_OUTPUT
 
 AC_MSG_NOTICE([
 

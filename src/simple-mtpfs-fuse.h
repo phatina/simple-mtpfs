@@ -23,7 +23,7 @@
 #include <string>
 #include <cstdlib>
 extern "C" {
-#  include <fuse/fuse.h>
+#  include <fuse.h>
 }
 #include "simple-mtpfs-mtp-device.h"
 #include "simple-mtpfs-tmp-files-pool.h"

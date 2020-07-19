@@ -108,10 +108,10 @@ bool MTPDevice::connect_priv(int dev_no, const std::string &dev_file)
             logerr("Encountered a Memory Allocation Error. Exiting.\n");
             break;
         case LIBMTP_ERROR_GENERAL:
-            logerr("General error occured. Exiting.\n");
+            logerr("General error occurred. Exiting.\n");
             break;
         case LIBMTP_ERROR_USB_LAYER:
-            logerr("USB Layer error occured. Exiting.\n");
+            logerr("USB Layer error occurred. Exiting.\n");
             break;
         default:
             break;
