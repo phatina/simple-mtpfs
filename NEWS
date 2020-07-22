@@ -1,3 +1,8 @@
+New in version 0.4.0:
+- support partial object manipulation
+- fixed temporary directories removal
+- build system cleanup
+
 New in version 0.3.0:
 - fix FreeBSD ports upgrade path
 

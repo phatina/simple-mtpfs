@@ -1,10 +1,10 @@
 Name:          simple-mtpfs
-Version:       0.3.0
+Version:       0.4.0
 Release:       1%{?dist}
 Summary:       Fuse-based MTP driver
 License:       GPLv2+
 URL:           https://github.com/phatina/simple-mtpfs
-Source0:       https://github.com/downloads/phatina/simple-mtpfs/%{name}-%{version}.tar.gz
+Source0:       https://github.com/phatina/simple-mtpfs/archive/v%{version}.tar.gz
 
 BuildRequires: fuse-devel >= 2.7.3
 BuildRequires: libmtp-devel
@@ -34,6 +34,9 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %{_mandir}/man1/simple-mtpfs.1.gz
 
 %changelog
+* Wed Jul 22 2020 Peter Hatina <peter@hatina.eu> - 0.4.0-1
+- upgrade to v0.4.0
+
 * Sun Dec 25 2016 Peter Hatina <phatina@gmail.com> - 0.3.0-1
 - upgrade to v0.3.0
 

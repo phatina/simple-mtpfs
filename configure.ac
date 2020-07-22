@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([simple-mtpfs],[0.3.0],[phatina@gmail.com])
+AC_INIT([simple-mtpfs],[0.4.0],[peter@hatina.eu])
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -11,7 +11,7 @@ AC_LANG([C++])
 AC_PROG_CXX
 AC_PROG_INSTALL
 
-AX_CXX_COMPILE_STDCXX_11([noext])
+AX_CXX_COMPILE_STDCXX_17([noext])
 AX_CXXFLAGS_WARN_ALL
 AC_CHECK_LIB([mtp], [LIBMTP_Init], [], [AC_MSG_ERROR([libmtp not found])])
 AC_CHECK_LIB([mtp], [LIBMTP_Check_Capability],
