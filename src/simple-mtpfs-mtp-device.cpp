@@ -720,6 +720,7 @@ bool MTPDevice::listDevices(bool verbose, const std::string &dev_file)
             continue;
         std::cout << i + 1 << ": "
             << (raw_devices[i].device_entry.vendor ? raw_devices[i].device_entry.vendor : "Unknown vendor ")
+            << ", "
             << (raw_devices[i].device_entry.product ? raw_devices[i].device_entry.product : "Unknown product")
             << std::endl;
 #ifdef HAVE_LIBMTP_CHECK_CAPABILITY

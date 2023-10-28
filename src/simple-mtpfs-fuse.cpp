@@ -85,13 +85,41 @@ int wrap_open(const char *path, struct fuse_file_info *file_info)
 int wrap_read(const char *path, char *buf, size_t size, off_t offset,
     struct fuse_file_info *file_info)
 {
-    return SMTPFileSystem::instance()->read(path, buf, size, offset, file_info);
+    if (file_info->direct_io) {
+        return SMTPFileSystem::instance()->read(path, buf, size, offset, file_info);
+    } else {
+        int bytes_read = 0;
+        while (bytes_read < size) {
+            int rval = SMTPFileSystem::instance()->read(path, buf + bytes_read, size - bytes_read, offset + bytes_read, file_info);
+            if (rval < 0) {
+                return rval;
+            } else if (rval == 0) {
+                break;
+            }
+            bytes_read += rval;
+        }
+        return bytes_read;
+    }
 }
 
 int wrap_write(const char *path, const char *buf, size_t size, off_t offset,
     struct fuse_file_info *file_info)
 {
-    return SMTPFileSystem::instance()->write(path, buf, size, offset, file_info);
+    if (file_info->direct_io) {
+        return SMTPFileSystem::instance()->write(path, buf, size, offset, file_info);
+    } else {
+        int bytes_written = 0;
+        while (bytes_written < size) {
+            int rval = SMTPFileSystem::instance()->write(path, buf + bytes_written, size - bytes_written, offset + bytes_written, file_info);
+            if (rval < 0) {
+                return rval;
+            } else if (rval == 0) {
+                break;
+            }
+            bytes_written += rval;
+        }
+        return bytes_written;
+    }
 }
 
 int wrap_statfs(const char *path, struct statvfs *stat_info)
