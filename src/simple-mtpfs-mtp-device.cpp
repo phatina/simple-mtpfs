@@ -522,7 +522,73 @@ int MTPDevice::fileWrite(const std::string &path, const char *buf, size_t size,
 
     if (rval < 0)
         return -EIO;
+
+    // keep the cached size in sync
+    uint64_t written_end = static_cast<uint64_t>(offset) + size;
+    if (written_end > file_to_fetch->size())
+        const_cast<TypeFile*>(file_to_fetch)->setSize(written_end);
+
     return size;
+}
+
+uint32_t MTPDevice::objectId(const std::string &path)
+{
+    const std::string path_basename(smtpfs_basename(path));
+    const std::string path_dirname(smtpfs_dirname(path));
+    const TypeDir *dir_parent = dirFetchContent(path_dirname);
+    const TypeFile *file = dir_parent ? dir_parent->file(path_basename) : nullptr;
+    return file ? file->id() : 0;
+}
+
+uint32_t MTPDevice::editStart(const std::string &path)
+{
+    uint32_t id = objectId(path);
+    if (!id)
+        return 0;
+
+    criticalEnter();
+    int rval = LIBMTP_BeginEditObject(m_device, id);
+    criticalLeave();
+
+    if (rval != 0)
+        return 0;
+    return id;
+}
+
+int MTPDevice::fileTruncate(const std::string &path, uint64_t size)
+{
+    const TypeDir *dir_parent = dirFetchContent(smtpfs_dirname(path));
+    const TypeFile *file = dir_parent ? dir_parent->file(smtpfs_basename(path)) : nullptr;
+    if (!file)
+        return -ENOENT;
+    uint32_t id = file->id();
+
+    criticalEnter();
+    int rval = LIBMTP_BeginEditObject(m_device, id);
+    if (rval == 0) {
+        rval = LIBMTP_TruncateObject(m_device, id, size);
+        LIBMTP_EndEditObject(m_device, id);
+    }
+    criticalLeave();
+
+    if (rval != 0)
+        return -EIO;
+
+    // sync the cache with the resized object
+    const_cast<TypeFile*>(file)->setSize(size);
+
+    return 0;
+}
+
+int MTPDevice::editEnd(uint32_t id)
+{
+    criticalEnter();
+    int rval = LIBMTP_EndEditObject(m_device, id);
+    criticalLeave();
+
+    if (rval != 0)
+        return -EIO;
+    return 0;
 }
 
 int MTPDevice::filePull(const std::string &src, const std::string &dst)

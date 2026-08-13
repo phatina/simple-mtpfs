@@ -23,7 +23,9 @@ TypeTmpFile::TypeTmpFile():
     m_path_device(),
     m_path_tmp(),
     m_file_descriptors(),
-    m_modified(false)
+    m_modified(false),
+    m_editing(false),
+    m_object_id(0)
 {
 }
 
@@ -32,7 +34,9 @@ TypeTmpFile::TypeTmpFile(const std::string &path_device,
         bool modified):
     m_path_device(path_device),
     m_path_tmp(path_tmp),
-    m_modified(modified)
+    m_modified(modified),
+    m_editing(false),
+    m_object_id(0)
 {
     m_file_descriptors.insert(file_desc);
 }
@@ -41,7 +45,9 @@ TypeTmpFile::TypeTmpFile(const TypeTmpFile &copy):
     m_path_device(copy.m_path_device),
     m_path_tmp(copy.m_path_tmp),
     m_file_descriptors(copy.m_file_descriptors),
-    m_modified(copy.m_modified)
+    m_modified(copy.m_modified),
+    m_editing(copy.m_editing),
+    m_object_id(copy.m_object_id)
 {
 }
 
@@ -67,5 +73,7 @@ TypeTmpFile &TypeTmpFile::operator =(const TypeTmpFile &rhs)
     m_path_tmp = rhs.m_path_tmp;
     m_file_descriptors = rhs.m_file_descriptors;
     m_modified = rhs.m_modified;
+    m_editing = rhs.m_editing;
+    m_object_id = rhs.m_object_id;
     return *this;
 }
