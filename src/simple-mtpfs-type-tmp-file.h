@@ -37,6 +37,11 @@ public:
     bool isModified() const { return m_modified; }
     void setModified(bool modified = true) { m_modified = modified; }
 
+    bool isEditing() const { return m_editing; }
+    uint32_t editObjectId() const { return m_object_id; }
+    void setEditing(uint32_t id) { m_editing = true; m_object_id = id; }
+    void clearEditing() { m_editing = false; m_object_id = 0; }
+
     std::set<int> fileDescriptors() const { return m_file_descriptors; }
     void addFileDescriptor(int fd) { m_file_descriptors.insert(fd); }
     bool hasFileDescriptor(int fd);
@@ -67,6 +72,8 @@ private:
     std::string m_path_tmp;
     std::set<int> m_file_descriptors;
     bool m_modified;
+    bool m_editing;
+    uint32_t m_object_id;
 };
 
 #endif // SMTPFS_TYPE_TMP_FILE_H

@@ -85,6 +85,11 @@ public:
     int fileRemove(const std::string &path);
     int fileRename(const std::string &oldpath, const std::string &newpath);
 
+    uint32_t objectId(const std::string &path);
+    uint32_t editStart(const std::string &path);
+    int editEnd(uint32_t id);
+    int fileTruncate(const std::string &path, uint64_t size);
+
     Capabilities getCapabilities() const;
 
     static bool listDevices(bool verbose, const std::string &dev_file);

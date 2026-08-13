@@ -553,6 +553,17 @@ int SMTPFileSystem::chown(const char *path, uid_t uid, gid_t gid)
 
 int SMTPFileSystem::truncate(const char *path, off_t new_size)
 {
+    if (hasPartialObjectSupport()) {
+        // close any open edit session before truncating in place
+        TypeTmpFile *tmp_file = const_cast<TypeTmpFile*>(
+            m_tmp_files_pool.getFile(std::string(path)));
+        if (tmp_file && tmp_file->isEditing()) {
+            m_device.editEnd(tmp_file->editObjectId());
+            tmp_file->clearEditing();
+        }
+        return m_device.fileTruncate(std::string(path), new_size);
+    }
+
     const std::string tmp_path = m_tmp_files_pool.makeTmpPath(std::string(path));
     int rval = m_device.filePull(std::string(path), tmp_path);
     if (rval != 0) {
@@ -609,7 +620,9 @@ int SMTPFileSystem::create(const char *path, mode_t mode, fuse_file_info *file_i
         return -errno;
 
     file_info->fh = rval;
-    m_tmp_files_pool.addFile(TypeTmpFile(std::string(path), tmp_path, rval, true));
+    // don't re-upload the empty temp on the partial path
+    m_tmp_files_pool.addFile(TypeTmpFile(std::string(path), tmp_path, rval,
+        !hasPartialObjectSupport()));
     rval = m_device.filePush(tmp_path, std::string(path));
 
     if (rval != 0)
@@ -685,6 +698,14 @@ int SMTPFileSystem::write(const char *path, const char *buf, size_t size,
     int rval = 0;
     if (hasPartialObjectSupport()) {
         const std::string std_path(path);
+        // begin the edit session on the first write
+        TypeTmpFile *tmp_file = const_cast<TypeTmpFile*>(
+            m_tmp_files_pool.getFile(std_path));
+        if (tmp_file && !tmp_file->isEditing()) {
+            uint32_t id = m_device.editStart(std_path);
+            if (id)
+                tmp_file->setEditing(id);
+        }
         rval = m_device.fileWrite(std_path, buf, size, offset);
     } else {
         const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(std::string(path));
@@ -717,9 +738,17 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
     if (tmp_file->refcnt() != 0)
         return 0;
 
+    const bool editing = tmp_file->isEditing();
+    const uint32_t edit_id = tmp_file->editObjectId();
     const bool modif = tmp_file->isModified();
     const std::string tmp_path = tmp_file->pathTmp();
     m_tmp_files_pool.removeFile(std_path);
+
+    // close the edit session
+    int edit_rval = 0;
+    if (editing)
+        edit_rval = m_device.editEnd(edit_id);
+
     if (modif) {
         rval = m_device.filePush(tmp_path, std_path);
         if (rval != 0) {
@@ -730,7 +759,7 @@ int SMTPFileSystem::release(const char *path, struct fuse_file_info *file_info)
 
     ::unlink(tmp_path.c_str());
 
-    return 0;
+    return edit_rval;
 }
 
 int SMTPFileSystem::statfs(const char *path, struct statvfs *stat_info)
@@ -818,6 +847,17 @@ int SMTPFileSystem::fsyncdir(const char *path, int datasync,
 int SMTPFileSystem::ftruncate(const char *path, off_t offset,
     struct fuse_file_info *file_info)
 {
+    if (hasPartialObjectSupport()) {
+        // close any open edit session before truncating in place
+        TypeTmpFile *edit_file = const_cast<TypeTmpFile*>(
+            m_tmp_files_pool.getFile(std::string(path)));
+        if (edit_file && edit_file->isEditing()) {
+            m_device.editEnd(edit_file->editObjectId());
+            edit_file->clearEditing();
+        }
+        return m_device.fileTruncate(std::string(path), offset);
+    }
+
     const TypeTmpFile *tmp_file = m_tmp_files_pool.getFile(std::string(path));
     if (::ftruncate(file_info->fh, offset) != 0)
         return -errno;
